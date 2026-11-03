@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from 'react';
 
-import { supportService, tagService, tagSimulator } from '@/services';
+import { supportService, tagSimulator, tagSources, type TagSourceId } from '@/services';
 import {
   configureNotifications,
   notifyUnauthorizedMovement,
@@ -28,6 +28,7 @@ type BikeContextValue = BikeState & {
   arm: () => void;
   disarm: () => void;
   setSubscription: (active: boolean) => void;
+  setTagSource: (source: TagSourceId) => void;
   /** Hands the theft over to customer service (police, crime report, insurance). */
   reportTheft: () => Promise<ReportResult>;
   /** "It was me" – closes the incident and turns off monitoring. */
@@ -48,27 +49,33 @@ export function BikeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY)
       .then((raw) => (raw ? (JSON.parse(raw) as Partial<PersistedState>) : {}))
-      .catch(() => ({}))
-      .then((persisted) => dispatch({ type: 'hydrate', persisted }));
+      .catch((): Partial<PersistedState> => ({}))
+      .then((persisted) => {
+        if (persisted.tagSource && !(persisted.tagSource in tagSources)) delete persisted.tagSource;
+        dispatch({ type: 'hydrate', persisted });
+      });
   }, []);
 
-  useEffect(() => {
-    if (!state.hydrated) return;
-    tagService.start();
-    const unsubscribe = tagService.subscribe((status) => dispatch({ type: 'tagUpdate', status }));
-    return () => {
-      unsubscribe();
-      tagService.stop();
-    };
-  }, [state.hydrated]);
-
-  // Persist the parts that should survive a restart.
-  const { hydrated, armed, parkedAt, subscriptionActive } = state;
+  // Listen to whichever tag source is selected.
+  const { hydrated, tagSource } = state;
   useEffect(() => {
     if (!hydrated) return;
-    const persisted: PersistedState = { armed, parkedAt, subscriptionActive };
+    const source = tagSources[tagSource];
+    source.start();
+    const unsubscribe = source.subscribe((status) => dispatch({ type: 'tagUpdate', status }));
+    return () => {
+      unsubscribe();
+      source.stop();
+    };
+  }, [hydrated, tagSource]);
+
+  // Persist the parts that should survive a restart.
+  const { armed, parkedAt, subscriptionActive } = state;
+  useEffect(() => {
+    if (!hydrated) return;
+    const persisted: PersistedState = { tagSource, armed, parkedAt, subscriptionActive };
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(persisted)).catch(() => {});
-  }, [hydrated, armed, parkedAt, subscriptionActive]);
+  }, [hydrated, tagSource, armed, parkedAt, subscriptionActive]);
 
   // Notifications: set up once, open the alert screen when one is tapped.
   useEffect(() => {
@@ -106,6 +113,11 @@ export function BikeProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const setTagSource = useCallback((source: TagSourceId) => {
+    tagSimulator.stopMovement();
+    dispatch({ type: 'setTagSource', source });
+  }, []);
+
   const reportTheft = useCallback(async (): Promise<ReportResult> => {
     const { incident, subscriptionActive, tag } = stateRef.current;
     if (!incident) return 'no_incident';
@@ -142,15 +154,24 @@ export function BikeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const closeIncident = useCallback(() => {
-    tagSimulator?.stopMovement(); // no-op once a real tag is in use
+    tagSimulator.stopMovement(); // no-op unless the simulator is riding away
     dispatch({ type: 'incidentClosed' });
   }, []);
   const dismissIncident = closeIncident;
   const markRecovered = closeIncident;
 
   const value = useMemo<BikeContextValue>(
-    () => ({ ...state, arm, disarm, setSubscription, reportTheft, dismissIncident, markRecovered }),
-    [state, arm, disarm, setSubscription, reportTheft, dismissIncident, markRecovered],
+    () => ({
+      ...state,
+      arm,
+      disarm,
+      setSubscription,
+      setTagSource,
+      reportTheft,
+      dismissIncident,
+      markRecovered,
+    }),
+    [state, arm, disarm, setSubscription, setTagSource, reportTheft, dismissIncident, markRecovered],
   );
 
   return <BikeContext.Provider value={value}>{children}</BikeContext.Provider>;

@@ -1,8 +1,10 @@
 import { isUnauthorizedMovement } from '@/domain/movementDetection';
 import type { Coordinate, Incident, IncidentStatus, LocationFix, TagStatus } from '@/domain/types';
+import type { TagSourceId } from '@/services';
 
 /** The part of the state that survives app restarts. */
 export type PersistedState = {
+  tagSource: TagSourceId;
   armed: boolean;
   parkedAt: Coordinate | null;
   subscriptionActive: boolean;
@@ -20,11 +22,13 @@ export type BikeAction =
   | { type: 'arm'; at: Coordinate }
   | { type: 'disarm' }
   | { type: 'setSubscription'; active: boolean }
+  | { type: 'setTagSource'; source: TagSourceId }
   | { type: 'incidentProgress'; message: string; status?: IncidentStatus; supportCaseId?: string }
   | { type: 'incidentClosed' };
 
 export const initialBikeState: BikeState = {
   hydrated: false,
+  tagSource: 'simulator',
   tag: null,
   armed: false,
   parkedAt: null,
@@ -66,6 +70,10 @@ export function bikeReducer(state: BikeState, action: BikeAction): BikeState {
 
     case 'setSubscription':
       return { ...state, subscriptionActive: action.active };
+
+    case 'setTagSource':
+      // A new source means a new position: reset monitoring so it can't fire a false alarm.
+      return { ...state, tagSource: action.source, tag: null, armed: false, parkedAt: null, incident: null };
 
     case 'incidentProgress': {
       if (!state.incident) return state;

@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { BigButton } from '@/components/BigButton';
 import { BikeMap } from '@/components/BikeMap';
 import { Card, Row } from '@/components/Card';
+import { distanceMeters } from '@/domain/geo';
 import { MOVEMENT_THRESHOLD_M } from '@/domain/movementDetection';
 import { formatPercent, formatTime } from '@/format';
 import { tagSimulator } from '@/services';
@@ -13,9 +14,12 @@ import { colors, radius, spacing } from '@/theme';
 const LOW_BATTERY_PERCENT = 20;
 
 export default function HomeScreen() {
-  const { tag, armed, parkedAt, incident, arm, disarm } = useBike();
+  const { tag, tagSource, armed, parkedAt, incident, arm, disarm } = useBike();
   const fix = tag?.lastFix ?? null;
-  const lowBattery = tag !== null && tag.batteryPercent < LOW_BATTERY_PERCENT;
+  const battery = tag?.batteryPercent ?? null;
+  const lowBattery = battery !== null && battery < LOW_BATTERY_PERCENT;
+  const distance = armed && parkedAt && fix ? distanceMeters(parkedAt, fix) : null;
+  const simulatorMoving = tagSource === 'simulator' && (fix?.speedKmh ?? 0) > 0;
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
@@ -50,15 +54,32 @@ export default function HomeScreen() {
 
       <Card title={tag?.name ?? 'Tägi'}>
         <Row label="Yhteys" value={tag?.connected ? 'Yhdistetty' : 'Ei yhteyttä'} />
-        <Row label="Akku" value={tag ? formatPercent(tag.batteryPercent) : '–'} />
+        <Row label="Akku" value={battery !== null ? formatPercent(battery) : '–'} />
         <Row label="Päivitetty" value={fix ? formatTime(fix.timestamp) : '–'} />
+        {distance !== null ? (
+          <Row
+            label="Etäisyys pysäköinnistä"
+            value={`${Math.round(distance)} / ${MOVEMENT_THRESHOLD_M} m`}
+          />
+        ) : null}
+        {tag?.error ? <Text style={styles.warning}>{tag.error}</Text> : null}
         {lowBattery ? <Text style={styles.warning}>Akku vähissä – lataa tägi johdolla.</Text> : null}
       </Card>
 
-      {__DEV__ && tagSimulator ? (
+      {__DEV__ && tagSource === 'simulator' ? (
         <Card title="Testaustila">
-          <BigButton title="Simuloi varkaus" variant="secondary" onPress={tagSimulator.simulateTheft} />
-          <BigButton title="Pysäytä pyörä" variant="secondary" onPress={tagSimulator.stopMovement} />
+          <BigButton
+            title={simulatorMoving ? 'Pysäytä pyörä' : 'Simuloi varkaus'}
+            variant="secondary"
+            onPress={simulatorMoving ? tagSimulator.stopMovement : tagSimulator.simulateTheft}
+          />
+          <Text style={styles.hint}>
+            {simulatorMoving
+              ? 'Pyörä liikkuu…'
+              : armed
+                ? 'Hälytys tulee, kun pyörä on yli rajan päässä (noin 10 s).'
+                : 'Aktivoi valvonta ensin, muuten varkaus ei hälytä.'}
+          </Text>
         </Card>
       ) : null}
     </ScrollView>

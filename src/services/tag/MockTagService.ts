@@ -47,11 +47,15 @@ export class MockTagService implements TagService, TagSimulator {
 
   // Arrow functions so they can be passed straight to onPress without losing `this`.
   simulateTheft = () => {
+    if (this.heading !== null) return;
     this.heading = Math.random() * 360;
+    this.tick(); // react immediately instead of on the next interval
   };
 
   stopMovement = () => {
+    if (this.heading === null) return;
     this.heading = null;
+    this.tick();
   };
 
   private tick() {
@@ -69,7 +73,7 @@ export class MockTagService implements TagService, TagSimulator {
     this.status = {
       ...this.status,
       connected: true,
-      batteryPercent: Math.max(0, this.status.batteryPercent - 0.02),
+      batteryPercent: Math.max(0, (this.status.batteryPercent ?? 100) - 0.02),
       lastFix: { ...position, timestamp: Date.now(), speedKmh },
     };
     this.listeners.forEach((l) => l(this.status));

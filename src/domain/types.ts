@@ -13,9 +13,12 @@ export type TagStatus = {
   id: string;
   name: string;
   connected: boolean;
-  batteryPercent: number;
+  /** null when the source can't report battery (e.g. phone GPS). */
+  batteryPercent: number | null;
   charging: boolean;
   lastFix: LocationFix | null;
+  /** Human-readable problem, e.g. missing location permission. */
+  error?: string;
 };
 
 export type IncidentStatus = 'detected' | 'reporting' | 'police_notified';
