@@ -45,13 +45,14 @@ export class MockTagService implements TagService, TagSimulator {
     };
   }
 
-  simulateTheft() {
+  // Arrow functions so they can be passed straight to onPress without losing `this`.
+  simulateTheft = () => {
     this.heading = Math.random() * 360;
-  }
+  };
 
-  stopMovement() {
+  stopMovement = () => {
     this.heading = null;
-  }
+  };
 
   private tick() {
     let position: Coordinate;
