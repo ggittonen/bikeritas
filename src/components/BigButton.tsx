@@ -1,5 +1,6 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
-import { colors, radius, spacing } from '@/theme';
+import { ActivityIndicator, Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import { colors, spacing } from '@/theme';
+import { AppText } from './AppText';
 
 type Variant = 'primary' | 'danger' | 'secondary';
 
@@ -9,11 +10,18 @@ type Props = {
   variant?: Variant;
   disabled?: boolean;
   loading?: boolean;
+  style?: StyleProp<ViewStyle>;
 };
 
-/** Large, high-contrast button – the app is used in stressful moments, so targets are big. */
-export function BigButton({ title, onPress, variant = 'primary', disabled, loading }: Props) {
-  const secondary = variant === 'secondary';
+const variantColor: Record<Variant, string> = {
+  primary: colors.text,
+  danger: colors.danger,
+  secondary: colors.muted,
+};
+
+/** Outlined, square, uppercase – large targets because the app is used in stressful moments. */
+export function BigButton({ title, onPress, variant = 'primary', disabled, loading, style }: Props) {
+  const color = variantColor[variant];
   return (
     <Pressable
       accessibilityRole="button"
@@ -21,14 +29,18 @@ export function BigButton({ title, onPress, variant = 'primary', disabled, loadi
       disabled={disabled || loading}
       style={({ pressed }) => [
         styles.base,
-        secondary ? styles.secondary : { backgroundColor: colors[variant] },
-        (pressed || disabled) && styles.dimmed,
+        { borderColor: color },
+        pressed && styles.pressed,
+        disabled && styles.disabled,
+        style,
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={secondary ? colors.text : '#fff'} />
+        <ActivityIndicator color={color} />
       ) : (
-        <Text style={[styles.label, secondary && styles.secondaryLabel]}>{title}</Text>
+        <AppText upper size={17} color={color} style={styles.label}>
+          {title}
+        </AppText>
       )}
     </Pressable>
   );
@@ -36,18 +48,14 @@ export function BigButton({ title, onPress, variant = 'primary', disabled, loadi
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 56,
-    borderRadius: radius.md,
+    minHeight: 60,
+    borderWidth: 3,
     paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  secondary: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  dimmed: { opacity: 0.6 },
-  label: { color: '#fff', fontSize: 18, fontWeight: '600' },
-  secondaryLabel: { color: colors.text },
+  pressed: { backgroundColor: 'rgba(255,255,255,0.12)' },
+  disabled: { opacity: 0.4 },
+  label: { textAlign: 'center' },
 });

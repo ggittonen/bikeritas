@@ -1,11 +1,16 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { colors, radius, spacing } from '@/theme';
+import { StyleSheet, View } from 'react-native';
+import { colors, spacing } from '@/theme';
+import { AppText } from './AppText';
 
 export function Card({ title, children }: { title?: string; children: ReactNode }) {
   return (
     <View style={styles.card}>
-      {title ? <Text style={styles.title}>{title}</Text> : null}
+      {title ? (
+        <AppText bold upper size={16}>
+          {title}
+        </AppText>
+      ) : null}
       {children}
     </View>
   );
@@ -14,23 +19,21 @@ export function Card({ title, children }: { title?: string; children: ReactNode 
 export function Row({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.row}>
-      <Text style={styles.label}>{label}</Text>
-      <Text style={styles.value}>{value}</Text>
+      <AppText upper size={13} color={colors.muted} style={styles.label}>
+        {label}
+      </AppText>
+      <AppText size={14}>{value}</AppText>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     padding: spacing.md,
     gap: spacing.sm,
   },
-  title: { fontSize: 16, fontWeight: '700', color: colors.text },
-  row: { flexDirection: 'row', justifyContent: 'space-between' },
-  label: { color: colors.muted, fontSize: 15 },
-  value: { color: colors.text, fontSize: 15, fontWeight: '500' },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
+  label: { flexShrink: 1 },
 });

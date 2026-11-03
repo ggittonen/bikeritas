@@ -15,10 +15,10 @@ npm run lint
 
 ## Demo-polku
 
-1. **Pyörä**-välilehti → *Aktivoi valvonta* (pysäköintipaikka tallentuu).
+1. **Pyörät**-välilehti → *Aktivoi valvonta* (pysäköintipaikka tallentuu).
 2. *Testaustila* → *Simuloi varkaus*. Kun pyörä on yli 30 m päässä, tulee ilmoitus ja hälytysnäkymä.
-3. Hälytysnäkymässä valitaan: *Ilmoita poliisille*, *Seuraa pyörää* tai *Se olin minä*.
-4. Poliisi-ilmoitus vaatii **Bikeritas Turva** -tilauksen (Asetukset-välilehden kytkin, simuloitu).
+3. Hälytysnäkymässä valitaan: *Ei huolta*, *Epäilen varkautta* tai *Avaa kartta*.
+4. Poliisi-ilmoitus vaatii **Bikeritas Turva** -tilauksen (Muut-välilehden kytkin, simuloitu).
 5. Seurantanäkymässä näkyy reitti, tapahtumat (poliisi-, rikos- ja vakuutusilmoitus) ja *Pyörä saatu takaisin*.
 
 ## Rakenne
@@ -26,8 +26,9 @@ npm run lint
 ```
 src/
   app/                    Näkymät (Expo Router: jokainen tiedosto = näkymä)
-    (tabs)/index.tsx      Etusivu: kartta, valvonta päälle/pois, tägin tila
-    (tabs)/settings.tsx   Tilaus ja tägin tiedot
+    (tabs)/index.tsx      SIJAINTI: koko näytön kartta
+    (tabs)/bikes.tsx      PYÖRÄT: valvonta päälle/pois, tägin tila, testaustila
+    (tabs)/more.tsx       MUUT: tilaus ja sijainnin lähde (simulaatio / puhelimen GPS)
     alert.tsx             Hälytys luvattomasta liikkeestä + toimintavaihtoehdot
     incident.tsx          Varkaustapauksen seuranta ja aikajana
   domain/                 Puhdas logiikka ilman UI:ta (tyypit, etäisyydet, liiketunnistus)

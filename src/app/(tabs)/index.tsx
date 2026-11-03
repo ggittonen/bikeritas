@@ -1,104 +1,73 @@
 import { Link } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { BigButton } from '@/components/BigButton';
+import { AppText } from '@/components/AppText';
 import { BikeMap } from '@/components/BikeMap';
-import { Card, Row } from '@/components/Card';
-import { distanceMeters } from '@/domain/geo';
-import { MOVEMENT_THRESHOLD_M } from '@/domain/movementDetection';
-import { formatPercent, formatTime } from '@/format';
-import { tagSimulator } from '@/services';
 import { useBike } from '@/state/BikeContext';
-import { colors, radius, spacing } from '@/theme';
+import { colors, spacing } from '@/theme';
 
-const LOW_BATTERY_PERCENT = 20;
-
-export default function HomeScreen() {
-  const { tag, tagSource, armed, parkedAt, incident, arm, disarm } = useBike();
-  const fix = tag?.lastFix ?? null;
-  const battery = tag?.batteryPercent ?? null;
-  const lowBattery = battery !== null && battery < LOW_BATTERY_PERCENT;
-  const distance = armed && parkedAt && fix ? distanceMeters(parkedAt, fix) : null;
-  const simulatorMoving = tagSource === 'simulator' && (fix?.speedKmh ?? 0) > 0;
+/** "Sijainti" tab: full-screen map of where the bike is right now. */
+export default function LocationScreen() {
+  const { tag, armed, parkedAt, incident } = useBike();
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
+    <View style={styles.screen}>
+      <BikeMap
+        position={tag?.lastFix ?? null}
+        parkedAt={armed ? parkedAt : null}
+        path={incident?.path}
+        label="Pyörän sijainti"
+        style={styles.map}
+      />
+
       {incident ? (
-        <Link href="/incident" asChild>
-          <Pressable style={styles.alertBanner}>
-            <Text style={styles.alertTitle}>Pyöräsi liikkuu!</Text>
-            <Text style={styles.alertBody}>Napauta nähdäksesi sijainnin ja tilanteen</Text>
+        <Link href="/alert" asChild>
+          <Pressable style={styles.alertBar}>
+            <AppText bold upper size={18} color={colors.danger}>
+              Huomio!
+            </AppText>
+            <AppText upper>Pyöräsi liikkuu ilman sinua</AppText>
           </Pressable>
         </Link>
-      ) : null}
-
-      <BikeMap position={fix} parkedAt={armed ? parkedAt : null} path={incident?.path} style={styles.map} />
-
-      <View style={[styles.statusPill, { backgroundColor: armed ? colors.success : colors.muted }]}>
-        <Text style={styles.statusText}>{armed ? 'Valvonta päällä' : 'Valvonta pois'}</Text>
-      </View>
-
-      {incident ? null : (
-        <>
-          <BigButton
-            title={armed ? 'Poista valvonta' : 'Aktivoi valvonta'}
-            variant={armed ? 'secondary' : 'primary'}
-            onPress={armed ? disarm : arm}
-            disabled={!fix}
-          />
-          <Text style={styles.hint}>
-            Saat hälytyksen, jos pyörä liikkuu yli {MOVEMENT_THRESHOLD_M} m pysäköintipaikasta.
-          </Text>
-        </>
+      ) : (
+        <View style={styles.statusBar} pointerEvents="none">
+          <View style={[styles.statusDot, { backgroundColor: armed ? colors.success : colors.muted }]} />
+          <AppText upper size={13}>
+            {armed ? 'Valvonta päällä' : 'Valvonta pois'}
+          </AppText>
+        </View>
       )}
-
-      <Card title={tag?.name ?? 'Tägi'}>
-        <Row label="Yhteys" value={tag?.connected ? 'Yhdistetty' : 'Ei yhteyttä'} />
-        <Row label="Akku" value={battery !== null ? formatPercent(battery) : '–'} />
-        <Row label="Päivitetty" value={fix ? formatTime(fix.timestamp) : '–'} />
-        {distance !== null ? (
-          <Row
-            label="Etäisyys pysäköinnistä"
-            value={`${Math.round(distance)} / ${MOVEMENT_THRESHOLD_M} m`}
-          />
-        ) : null}
-        {tag?.error ? <Text style={styles.warning}>{tag.error}</Text> : null}
-        {lowBattery ? <Text style={styles.warning}>Akku vähissä – lataa tägi johdolla.</Text> : null}
-      </Card>
-
-      {__DEV__ && tagSource === 'simulator' ? (
-        <Card title="Testaustila">
-          <BigButton
-            title={simulatorMoving ? 'Pysäytä pyörä' : 'Simuloi varkaus'}
-            variant="secondary"
-            onPress={simulatorMoving ? tagSimulator.stopMovement : tagSimulator.simulateTheft}
-          />
-          <Text style={styles.hint}>
-            {simulatorMoving
-              ? 'Pyörä liikkuu…'
-              : armed
-                ? 'Hälytys tulee, kun pyörä on yli rajan päässä (noin 10 s).'
-                : 'Aktivoi valvonta ensin, muuten varkaus ei hälytä.'}
-          </Text>
-        </Card>
-      ) : null}
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.md, gap: spacing.md },
-  map: { height: 280, borderRadius: radius.md, overflow: 'hidden' },
-  alertBanner: { backgroundColor: colors.danger, borderRadius: radius.md, padding: spacing.md },
-  alertTitle: { color: '#fff', fontSize: 20, fontWeight: '700' },
-  alertBody: { color: '#fff', marginTop: spacing.xs },
-  statusPill: {
+  screen: { flex: 1 },
+  map: { flex: 1 },
+  alertBar: {
+    position: 'absolute',
+    left: spacing.md,
+    right: spacing.md,
+    bottom: spacing.md,
+    backgroundColor: colors.chrome,
+    borderWidth: 3,
+    borderColor: colors.danger,
+    padding: spacing.md,
+    alignItems: 'center',
+    gap: spacing.xs,
+    zIndex: 1000,
+  },
+  statusBar: {
+    position: 'absolute',
+    bottom: spacing.md,
     alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: '#111',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: 999,
+    zIndex: 1000,
   },
-  statusText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-  hint: { color: colors.muted, textAlign: 'center' },
-  warning: { color: colors.warning, fontWeight: '600' },
+  statusDot: { width: 10, height: 10, borderRadius: 5 },
 });

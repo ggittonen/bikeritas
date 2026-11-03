@@ -1,12 +1,13 @@
 import { router } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { AppText } from '@/components/AppText';
 import { BigButton } from '@/components/BigButton';
 import { BikeMap } from '@/components/BikeMap';
 import { Card, Row } from '@/components/Card';
 import { formatTime } from '@/format';
 import { useBike } from '@/state/BikeContext';
-import { colors, radius, spacing } from '@/theme';
+import { colors, spacing } from '@/theme';
 
 const STATUS_LABEL = {
   detected: 'Ei vielä ilmoitettu',
@@ -21,8 +22,8 @@ export default function IncidentScreen() {
   if (!incident) {
     return (
       <View style={styles.content}>
-        <Text style={styles.body}>Ei aktiivista tapausta.</Text>
-        <BigButton title="Etusivulle" variant="secondary" onPress={() => router.dismissTo('/')} />
+        <AppText upper>Ei aktiivista tapausta.</AppText>
+        <BigButton title="Etusivulle" onPress={() => router.dismissTo('/')} />
       </View>
     );
   }
@@ -34,7 +35,7 @@ export default function IncidentScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <BikeMap position={fix} path={incident.path} style={styles.map} />
+      <BikeMap position={fix} path={incident.path} label="Pyörän sijainti" style={styles.map} />
 
       <Card title="Tilanne">
         <Row label="Tila" value={STATUS_LABEL[incident.status]} />
@@ -46,24 +47,27 @@ export default function IncidentScreen() {
       <Card title="Tapahtumat">
         {incident.timeline.map((event, i) => (
           <View key={i} style={styles.event}>
-            <Text style={styles.eventTime}>{formatTime(event.at)}</Text>
-            <Text style={styles.body}>{event.message}</Text>
+            <AppText size={13} color={colors.muted}>
+              {formatTime(event.at)}
+            </AppText>
+            <AppText size={14} style={styles.eventText}>
+              {event.message}
+            </AppText>
           </View>
         ))}
       </Card>
 
       {incident.status === 'detected' ? (
-        <BigButton title="Ilmoita poliisille" variant="danger" onPress={() => router.push('/alert')} />
+        <BigButton title="Epäilen varkautta" variant="danger" onPress={() => router.push('/alert')} />
       ) : null}
-      <BigButton title="Pyörä saatu takaisin" variant="secondary" onPress={onRecovered} />
+      <BigButton title="Pyörä saatu takaisin" onPress={onRecovered} />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   content: { padding: spacing.md, gap: spacing.md },
-  map: { height: 300, borderRadius: radius.md, overflow: 'hidden' },
-  body: { fontSize: 15, color: colors.text, flexShrink: 1 },
+  map: { height: 320 },
   event: { flexDirection: 'row', gap: spacing.sm },
-  eventTime: { color: colors.muted, fontVariant: ['tabular-nums'] },
+  eventText: { flexShrink: 1 },
 });

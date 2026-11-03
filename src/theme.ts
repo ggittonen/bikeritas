@@ -1,14 +1,20 @@
 export const colors = {
-  primary: '#1F6FEB',
-  danger: '#D93025',
-  success: '#1E8E3E',
-  warning: '#F29900',
-  text: '#1B1F24',
-  muted: '#5F6670',
-  border: '#E1E4E8',
-  background: '#F6F8FA',
-  surface: '#FFFFFF',
+  background: '#2B2B2B',
+  /** Header and tab bar. */
+  chrome: '#232323',
+  surface: '#333333',
+  text: '#FFFFFF',
+  muted: '#9A9A9A',
+  border: '#FFFFFF',
+  divider: '#4A4A4A',
+  danger: '#E5484D',
+  success: '#46C46E',
+  warning: '#F2B33D',
 };
 
-export const spacing = { xs: 4, sm: 8, md: 16, lg: 24 };
-export const radius = { md: 12, lg: 20 };
+export const fonts = {
+  regular: 'SpaceMono_400Regular',
+  bold: 'SpaceMono_700Bold',
+};
+
+export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 };
