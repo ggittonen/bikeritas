@@ -19,7 +19,7 @@ Built with Expo (SDK 58), React Native, TypeScript and Expo Router.
 - **Node.js** (LTS): https://nodejs.org
 - **Git**: https://git-scm.com
 - **Expo Go** on your phone (App Store / Google Play)
-- A free **Expo account**: https://expo.dev/signup
+- A free **Expo account**: https://expo.dev/signup (optional, see *Without an Expo account* below)
 
 ### 2. Get the project
 
@@ -60,13 +60,33 @@ Keep this terminal window open while you use the app. Stop it with **Ctrl+C**.
 - **For the two-phone test, what must match is the Firebase backend** (the same `.env.local`), not
   the Expo account.
 
-### Or in a browser
+### Without an Expo account
+
+The Expo account is only needed for `--tunnel`. Two ways to skip it:
+
+**A. Same Wi‑Fi (phone and computer on the same network)**
+
+```bash
+npx expo start
+```
+
+No login needed. Scan the QR code (iPhone: Camera app, Android: inside Expo Go), or type the
+`exp://192.168.…:8081` address shown in the terminal into Expo Go.
+
+This only works on networks that let devices talk to each other: home Wi‑Fi or a **phone hotspot**
+works. Eduroam and most school or office networks don't; use the tunnel there.
+
+**B. In a browser (no phone, no Expo Go)**
 
 ```bash
 npm run web
 ```
 
-Opens at http://localhost:8081. Notifications don't work in the browser.
+Opens at http://localhost:8081, with a real map. Notifications don't work in the browser, and
+location comes from the computer, which is much less accurate than a phone's GPS.
+
+The browser works well as the **owner's side** in the two-phone test: pair it with a tag phone's
+code and the HUOMIO! screen appears in the browser when the bike moves.
 
 ---
 
