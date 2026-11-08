@@ -1,23 +1,27 @@
 # Bikeritas
 
-Mobiilisovellus GPS-tägillä varustetun pyörän seurantaan. Kun pyörä liikkuu ilman lupaa, sovellus
-hälyttää ja antaa yksinkertaiset vaihtoehdot: *Ei huolta* tai *Epäilen varkautta*, jolloin
-asiakaspalvelu ilmoittaa poliisille ja hoitaa rikos- ja vakuutusilmoitukset.
+A mobile app for tracking a bike fitted with a GPS tag. When the bike moves without permission, the
+app raises an alarm and offers two simple choices: *Ei huolta* ("No worries") or *Epäilen varkautta*
+("I suspect theft"). In the second case, customer service notifies the police and files the crime
+report and insurance claim for you.
 
-Tehty: Expo (SDK 58), React Native, TypeScript ja Expo Router.
+Built with Expo (SDK 58), React Native, TypeScript and Expo Router.
+
+> The app's interface is in Finnish. Button and tab names below are given as they appear in the app,
+> with English translations where helpful.
 
 ---
 
-## Pikaopas: sovellus käyntiin
+## Quick start
 
-### 1. Asenna kerran
+### 1. Install once
 
 - **Node.js** (LTS): https://nodejs.org
 - **Git**: https://git-scm.com
-- Puhelimeen **Expo Go** (App Store / Google Play)
-- Ilmainen **Expo-tili**: https://expo.dev/signup
+- **Expo Go** on your phone (App Store / Google Play)
+- A free **Expo account**: https://expo.dev/signup
 
-### 2. Lataa projekti
+### 2. Get the project
 
 ```bash
 git clone https://github.com/ggittonen/bikeritas.git
@@ -25,116 +29,120 @@ cd bikeritas
 npm install
 ```
 
-### 3. Käynnistä tietokoneella
+### 3. Start it on your computer
 
 ```bash
-npx expo login           # vain ensimmäisellä kerralla
+npx expo login           # first time only
 npx expo start --tunnel
 ```
 
-Jätä tämä ikkuna auki niin kauan kuin käytät sovellusta. Pysäytys: **Ctrl+C**.
+Keep this terminal window open while you use the app. Stop it with **Ctrl+C**.
 
-### 4. Avaa puhelimella
+### 4. Open it on your phone
 
-1. Avaa **Expo Go** ja kirjaudu **samalla Expo-tilillä**.
-2. Napauta etusivulla kohdassa **Development servers** → **Bikeritas**.
-3. Salli ilmoitukset.
+1. Open **Expo Go** and log in with the **same Expo account**.
+2. On the home screen, under **Development servers**, tap **Bikeritas**.
+3. Allow notifications.
 
-> QR-koodinkin voi skannata: iPhonella tavallisella kameralla, Androidilla Expo Go -sovelluksen
-> sisältä. Jos koodi ei skannaudu, käytä yllä olevaa kirjautumistapaa.
+> You can also scan the QR code: on iPhone with the regular Camera app, on Android from inside
+> Expo Go. If the code won't scan, use the login method above.
 
-### Tai selaimessa
+### Or in a browser
 
 ```bash
 npm run web
 ```
 
-Avautuu osoitteeseen http://localhost:8081. Ilmoitukset eivät toimi selaimessa.
+Opens at http://localhost:8081. Notifications don't work in the browser.
 
 ---
 
-## Kokeile varkaustilannetta
+## Try a theft scenario
 
-1. **PYÖRÄT** → *Aktivoi valvonta*. Nykyinen sijainti tallentuu pysäköintipaikaksi.
-2. **Testaustila** → *Simuloi varkaus*. Noin 10 sekunnissa pyörä on yli 30 m päässä ja
-   **HUOMIO!**-näkymä aukeaa.
-3. Valitse *Ei huolta*, *Epäilen varkautta* tai *Avaa kartta*.
-4. *Epäilen varkautta* vaatii **Bikeritas Turva** -tilauksen. Kytke se päälle **MUUT**-välilehdeltä
-   (simuloitu, ei maksua).
-5. Seurantanäkymässä näkyvät reitti ja tapahtumat. Lopuksi *Pyörä saatu takaisin*.
+1. **PYÖRÄT** (Bikes) → *Aktivoi valvonta* (Turn on monitoring). Your current location is saved as
+   the parking spot.
+2. **Testaustila** (Test mode) → *Simuloi varkaus* (Simulate theft). In about 10 seconds the bike is
+   more than 30 m away and the **HUOMIO!** (Alert!) screen opens.
+3. Choose *Ei huolta* (No worries), *Epäilen varkautta* (I suspect theft) or *Avaa kartta* (Open map).
+4. *Epäilen varkautta* requires the **Bikeritas Turva** subscription. Turn it on in the **MUUT**
+   (More) tab. It's simulated, so nothing is charged.
+5. The tracking screen shows the route and a timeline of events. Finish with *Pyörä saatu takaisin*
+   (Bike recovered).
 
-### Oikealla puhelimen sijainnilla
+### Using your phone's real location
 
-**MUUT** → **Sijainnin lähde** → **Puhelimen GPS**, ja salli sijainti. Puhelin toimii nyt tägin
-tilalla. Aktivoi valvonta ja kävele ulkona yli 30 m. Sijainti päivittyy vain, kun sovellus on auki.
+**MUUT** (More) → **Sijainnin lähde** (Location source) → **Puhelimen GPS** (Phone GPS), then allow
+location access. The phone now acts as the tag. Turn on monitoring and walk more than 30 m outdoors.
+The location only updates while the app is open.
 
 ---
 
-## Ongelmatilanteita
+## Troubleshooting
 
-| Ongelma | Ratkaisu |
+| Problem | Fix |
 | --- | --- |
-| Puhelin ei saa yhteyttä | Käynnistä `npx expo start --tunnel` (koulun verkot estävät suoran yhteyden) |
-| "Incompatible with this version of Expo Go" | Päivitä Expo Go sovelluskaupasta |
-| Vanha tai rikkinäinen näkymä | `npx expo start --clear` |
-| Sijaintia ei näy | Salli sijainti Expo Golle puhelimen asetuksista ja mene ulos |
-| `npx expo login` kaatuu ("exited with non-zero code") | Käytä `npx expo login --no-browser` tai access tokenia (alla) |
-| Expo-tili on tehty Googlella, eikä salasanaa ole | Käytä access tokenia (alla) |
-| Bikeritas ei näy Expo Gossa | Tietokone ja puhelin pitää olla kirjautuneena **samalle** tilille. Älä käytä robot-tokenia |
+| Phone can't connect | Start with `npx expo start --tunnel` (school networks block direct connections) |
+| "Incompatible with this version of Expo Go" | Update Expo Go from the app store |
+| Old or broken screen | `npx expo start --clear` |
+| Location doesn't show | Allow location for Expo Go in the phone's settings, and go outdoors |
+| `npx expo login` crashes ("exited with non-zero code") | Use `npx expo login --no-browser` or an access token (below) |
+| Expo account was created with Google, so there's no password | Use an access token (below) |
+| Bikeritas doesn't appear in Expo Go | The computer and phone must be logged in to the **same** account. Don't use a robot token |
 
-### Kirjautuminen access tokenilla
+### Logging in with an access token
 
-1. Avaa https://expo.dev/settings/access-tokens → **Personal access tokens** → **Create token** ja kopioi token.
-2. Aja terminaalissa (lainausmerkit mukaan):
+1. Go to https://expo.dev/settings/access-tokens → **Personal access tokens** → **Create token**,
+   and copy the token.
+2. Run in the terminal (keep the quotes):
    ```powershell
-   $env:EXPO_TOKEN="token-tähän"
+   $env:EXPO_TOKEN="your-token-here"
    npx expo start --tunnel
    ```
-   Asetus on voimassa vain avoimessa terminaali-ikkunassa.
-3. Puhelimessa: Expo Go → **Log in** → **Continue with Google** samalla tilillä.
+   This setting only lasts while that terminal window is open.
+3. On the phone: Expo Go → **Log in** → **Continue with Google**, using the same account.
 
-Älä laita tokenia koodiin, GitHubiin tai chattiin.
+Never put the token in the code, on GitHub or in a chat.
 
 ---
 
-## Kehittäjille
+## For developers
 
 ```bash
-npm run typecheck   # TypeScript-tarkistus
+npm run typecheck   # TypeScript check
 npm run lint        # ESLint
 ```
 
-### Rakenne
+### Project structure
 
 ```
 src/
-  app/                    Näkymät (Expo Router: jokainen tiedosto = näkymä)
-    (tabs)/index.tsx      SIJAINTI: koko näytön kartta
-    (tabs)/bikes.tsx      PYÖRÄT: valvonta päälle/pois, tägin tila, testaustila
-    (tabs)/more.tsx       MUUT: tilaus ja sijainnin lähde
-    alert.tsx             HUOMIO!-hälytys ja toimintavaihtoehdot
-    incident.tsx          Varkaustapauksen seuranta ja aikajana
-  domain/                 Puhdas logiikka ilman UI:ta (tyypit, etäisyydet, liiketunnistus)
+  app/                    Screens (Expo Router: every file is a screen)
+    (tabs)/index.tsx      SIJAINTI (Location): full-screen map
+    (tabs)/bikes.tsx      PYÖRÄT (Bikes): monitoring on/off, tag status, test mode
+    (tabs)/more.tsx       MUUT (More): subscription and location source
+    alert.tsx             HUOMIO! alert and the choices
+    incident.tsx          Theft tracking and timeline
+  domain/                 Pure logic with no UI (types, distances, movement detection)
   services/
-    tag/                  TagService-rajapinta: simulaattori ja puhelimen GPS
-    support/              SupportService-rajapinta + mock (asiakaspalvelu / poliisi / vakuutus)
-    notifications.ts      Paikalliset ilmoitukset
-    index.ts              Tässä vaihdetaan mockit oikeisiin toteutuksiin
-  state/                  Sovelluksen tila (reducer + BikeContext)
-  components/             UI-palat (kartta, napit, kortit, ikonit)
-  theme.ts                Värit ja fontit
+    tag/                  TagService interface: simulator and phone GPS
+    support/              SupportService interface + mock (customer service / police / insurance)
+    notifications.ts      Local notifications
+    index.ts              Swap the mocks for real implementations here
+  state/                  App state (reducer + BikeContext)
+  components/             UI pieces (map, buttons, cards, icons)
+  theme.ts                Colors and fonts
 ```
 
-Näkymät käyttävät vain rajapintoja `TagService` ja `SupportService`. Oikean tägin
-(BLE / LTE-M / pilvi-API) ja asiakaspalvelun backendin voi siis kytkeä tiedostossa
-`src/services/index.ts` muuttamatta näkymiä.
+Screens only use the `TagService` and `SupportService` interfaces. So the real tag
+(BLE / LTE-M / cloud API) and the customer service backend can be plugged in at
+`src/services/index.ts` without changing any screens.
 
-### Jatkokehitys
+### Next steps
 
-- Oikea tägi ja sen parittaminen sovellukseen
-- Backend, jotta tägi ja omistajan puhelin voivat olla eri laitteita
-- Etä-push-ilmoitukset (vaatii development buildin: `npx expo run:android` tai EAS)
-- Hälytysääni / kaiutin tägissä (huomioi akunkulutus)
-- Valvonnan automaattinen ohitus, kun omistajan puhelin on lähellä
-- Oikea tilaus- ja maksujärjestelmä
-- Karttojen API-avaimet ennen sovelluskauppajulkaisua
+- Real tag hardware and pairing it with the app
+- A backend, so the tag and the owner's phone can be separate devices
+- Remote push notifications (needs a development build: `npx expo run:android` or EAS)
+- Alarm sound / speaker in the tag (mind the battery use)
+- Skip the alarm automatically when the owner's phone is nearby
+- Real subscription and payments
+- Map API keys before publishing to the app stores
