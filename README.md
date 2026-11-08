@@ -20,7 +20,7 @@ Tehty: Expo (SDK 58), React Native, TypeScript ja Expo Router.
 ### 2. Lataa projekti
 
 ```bash
-git clone <TÄMÄN-REPON-OSOITE>
+git clone https://github.com/ggittonen/bikeritas.git
 cd bikeritas
 npm install
 ```
