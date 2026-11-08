@@ -69,9 +69,9 @@ No account? Use `npx expo start` instead, with the phone on the same Wi‑Fi or 
 
 ### Without an Expo account
 
-The Expo account is only needed for `--tunnel`. You still need steps **1** (install Node.js, Git
-and Expo Go) and **2** (`git clone` + `npm install`) first. Then, instead of step 3, use one of
-these:
+The Expo account is only needed for `--tunnel`. You still need steps **1** (install Node.js and
+Git, plus Expo Go for option A) and **2** (`git clone` + `npm install`) first. Then, instead of
+step 3, use one of these:
 
 **A. Same Wi‑Fi (phone and computer on the same network)**
 
