@@ -47,6 +47,19 @@ Keep this terminal window open while you use the app. Stop it with **Ctrl+C**.
 > You can also scan the QR code: on iPhone with the regular Camera app, on Android from inside
 > Expo Go. If the code won't scan, use the login method above.
 
+### Who needs which account?
+
+- **Only the person running `npx expo start --tunnel` must be logged in to Expo.** Any free account
+  works. Nobody needs to create a "Bikeritas" project on expo.dev.
+- **Phones logged in to the same Expo account** see the server under *Development servers*.
+- **Any other phone** (e.g. a teammate's) can open the same running server **without logging in**.
+  Send them the `exp://….exp.direct` link shown in the terminal and they tap it, or they scan the
+  QR code.
+- Teammates can also run their own server from their own clone, logged in to their own Expo
+  account.
+- **For the two-phone test, what must match is the Firebase backend** (the same `.env.local`), not
+  the Expo account.
+
 ### Or in a browser
 
 ```bash
