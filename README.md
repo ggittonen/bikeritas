@@ -14,9 +14,9 @@ Built with Expo (SDK 58), React Native, TypeScript and Expo Router.
 
 ## Quick start
 
-> **No Expo account? No problem.** The account is only needed for tunnel mode. On home Wi‑Fi or a
-> phone hotspot, just run `npx expo start`, or open the app in a browser with `npm run web`.
-> See [Without an Expo account](#without-an-expo-account).
+> **No Expo account? No problem.** The account is only needed for tunnel mode. Do steps **1** and
+> **2** below as usual, then instead of step 3 run `npx expo start` (home Wi‑Fi or a phone hotspot)
+> or `npm run web` (browser). See [Without an Expo account](#without-an-expo-account).
 
 ### 1. Install once
 
@@ -69,7 +69,9 @@ No account? Use `npx expo start` instead, with the phone on the same Wi‑Fi or 
 
 ### Without an Expo account
 
-The Expo account is only needed for `--tunnel`. Two ways to skip it:
+The Expo account is only needed for `--tunnel`. You still need steps **1** (install Node.js, Git
+and Expo Go) and **2** (`git clone` + `npm install`) first. Then, instead of step 3, use one of
+these:
 
 **A. Same Wi‑Fi (phone and computer on the same network)**
 
