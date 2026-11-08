@@ -78,6 +78,22 @@ tilalla. Aktivoi valvonta ja kävele ulkona yli 30 m. Sijainti päivittyy vain, 
 | "Incompatible with this version of Expo Go" | Päivitä Expo Go sovelluskaupasta |
 | Vanha tai rikkinäinen näkymä | `npx expo start --clear` |
 | Sijaintia ei näy | Salli sijainti Expo Golle puhelimen asetuksista ja mene ulos |
+| `npx expo login` kaatuu ("exited with non-zero code") | Käytä `npx expo login --no-browser` tai access tokenia (alla) |
+| Expo-tili on tehty Googlella, eikä salasanaa ole | Käytä access tokenia (alla) |
+| Bikeritas ei näy Expo Gossa | Tietokone ja puhelin pitää olla kirjautuneena **samalle** tilille. Älä käytä robot-tokenia |
+
+### Kirjautuminen access tokenilla
+
+1. Avaa https://expo.dev/settings/access-tokens → **Personal access tokens** → **Create token** ja kopioi token.
+2. Aja terminaalissa (lainausmerkit mukaan):
+   ```powershell
+   $env:EXPO_TOKEN="token-tähän"
+   npx expo start --tunnel
+   ```
+   Asetus on voimassa vain avoimessa terminaali-ikkunassa.
+3. Puhelimessa: Expo Go → **Log in** → **Continue with Google** samalla tilillä.
+
+Älä laita tokenia koodiin, GitHubiin tai chattiin.
 
 ---
 
