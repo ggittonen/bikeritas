@@ -17,6 +17,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="alert" options={{ presentation: 'modal' }} />
         <Stack.Screen name="incident" />
+        <Stack.Screen name="tag-mode" />
       </Stack>
     </BikeProvider>
   );

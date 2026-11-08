@@ -1,0 +1,15 @@
+rules_version = '2';
+
+// Prototype rules: anyone who knows a bike's 8-character code can read and
+// update that one bike, but nobody can list all bikes or delete them.
+// Before real users, add Firebase Auth and tie each bike to its owner.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /bikes/{bikeId} {
+      allow get: if bikeId.size() == 8;
+      allow create, update: if bikeId.size() == 8
+        && request.resource.data.keys().hasOnly(['name', 'batteryPercent', 'lastFix', 'updatedAt']);
+      allow list, delete: if false;
+    }
+  }
+}

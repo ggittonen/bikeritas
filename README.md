@@ -71,9 +71,81 @@ Opens at http://localhost:8081. Notifications don't work in the browser.
 
 ### Using your phone's real location
 
-**MUUT** (More) → **Sijainnin lähde** (Location source) → **Puhelimen GPS** (Phone GPS), then allow
-location access. The phone now acts as the tag. Turn on monitoring and walk more than 30 m outdoors.
-The location only updates while the app is open.
+**MUUT** (More) → **Sijainnin lähde** (Location source) → **Tämän puhelimen GPS** (This phone's
+GPS), then allow location access. The phone now acts as the tag. Turn on monitoring and walk more
+than 30 m outdoors. The location only updates while the app is open.
+
+---
+
+## Two phones: tag on the bike, alerts on the owner's phone
+
+One phone plays the GPS tag and rides with the bike. The owner's phone gets the alert.
+
+### How it works
+
+```
+ Tag phone (on the bike)            Firebase Firestore             Owner's phone
+ ───────────────────────            ──────────────────             ─────────────
+ reads GPS every ~3 s   ──writes──▶  bikes/{code}       ──live──▶  follows the bike on the map,
+ sends position+battery             (one document               runs the 30 m theft check,
+                                     per bike)                   shows HUOMIO! + notification
+```
+
+- **The tag phone** (*tägitila*, tag mode) only sends: position, battery and a timestamp, into one
+  document named after its 8-character pairing code, e.g. `AB3K-9XQ2`.
+- **Firestore** is the backend. It keeps the latest state of each bike and pushes every change
+  straight to anyone listening. No server code to host.
+- **The owner's phone** listens to that document. It treats it like any other location source, so
+  the theft check, alert screen, route and reporting all work the same as on one phone. If no
+  update arrives for 30 s, it shows the tag as disconnected.
+- **The real GPS tag** can later write to the same document, and the owner's app won't need to
+  change.
+
+### Limits of this prototype
+
+- **The owner's app must be open** to get the alert. Alerts while the app is closed need real push
+  notifications, which need a development build (Expo Go on Android doesn't support them). The next
+  step is a Cloud Function that runs the theft check on the server and sends a push.
+- **The tag phone must stay in tag mode with the screen on.** The screen stays awake automatically.
+- **Pairing is by code only.** Anyone who knows a code can read that bike's location. Add Firebase
+  Auth before real users.
+- Firestore's free tier allows 20,000 writes a day. The tag writes about 1,200 an hour, which is
+  plenty for testing.
+
+### One-time setup: create the Firebase backend (about 10 min)
+
+1. Go to https://console.firebase.google.com → **Create a project** (e.g. `bikeritas`). Google
+   Analytics can be turned off.
+2. **Build → Firestore Database → Create database.** Pick a location in Europe (e.g.
+   `europe-north1`) and start in **production mode**.
+3. In Firestore, open the **Rules** tab, replace everything with the contents of
+   [`firestore.rules`](firestore.rules), and click **Publish**.
+4. **Project settings** (gear icon) → **Your apps** → the **Web** icon `</>` → register an app
+   (e.g. `bikeritas`). Don't enable Hosting. Firebase shows a `firebaseConfig` with values.
+5. In the project folder, copy `.env.example` to a new file **`.env.local`** and paste the values:
+   ```
+   EXPO_PUBLIC_FIREBASE_API_KEY=AIza...
+   EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=bikeritas-xxxx.firebaseapp.com
+   EXPO_PUBLIC_FIREBASE_PROJECT_ID=bikeritas-xxxx
+   EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=bikeritas-xxxx.firebasestorage.app
+   EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=1234567890
+   EXPO_PUBLIC_FIREBASE_APP_ID=1:1234567890:web:abc123
+   ```
+   `.env.local` is not uploaded to GitHub. Send it to teammates privately so everyone uses the
+   same backend.
+6. Restart the server: `npx expo start --tunnel --clear`.
+
+### Try it
+
+1. Open the app on **both** phones (both in Expo Go, from the same running server).
+2. **Tag phone:** **MUUT** → *Käynnistä tägitila* (Start tag mode). Allow location. A code like
+   `AB3K-9XQ2` appears.
+3. **Owner's phone:** **MUUT** → **Sijainnin lähde** → *Pyörän tägi (toinen puhelin)* (Bike's tag,
+   other phone) → type the code → *Yhdistä* (Connect). The **SIJAINTI** map now shows the tag
+   phone's position.
+4. **Owner's phone:** **PYÖRÄT** → *Aktivoi valvonta*.
+5. Walk more than 30 m outdoors with the tag phone. The owner's phone shows **HUOMIO!** and a
+   notification.
 
 ---
 
@@ -85,6 +157,9 @@ The location only updates while the app is open.
 | "Incompatible with this version of Expo Go" | Update Expo Go from the app store |
 | Old or broken screen | `npx expo start --clear` |
 | Location doesn't show | Allow location for Expo Go in the phone's settings, and go outdoors |
+| "Backend puuttuu" (Backend missing) | Create `.env.local` (see *Two phones* above) and restart with `--clear` |
+| "Tägiä ei löydy tällä koodilla" (No tag with this code) | Start tag mode on the other phone first, and check the code |
+| Owner sees "Tägi ei ole lähettänyt sijaintia hetkeen" | The tag phone left tag mode, locked its screen or lost its network |
 | `npx expo login` crashes ("exited with non-zero code") | Use `npx expo login --no-browser` or an access token (below) |
 | Expo account was created with Google, so there's no password | Use an access token (below) |
 | Bikeritas doesn't appear in Expo Go | The computer and phone must be logged in to the **same** account. Don't use a robot token |
@@ -122,9 +197,11 @@ src/
     (tabs)/more.tsx       MUUT (More): subscription and location source
     alert.tsx             HUOMIO! alert and the choices
     incident.tsx          Theft tracking and timeline
+    tag-mode.tsx          Tag mode: this phone sends its location to the backend
   domain/                 Pure logic with no UI (types, distances, movement detection)
   services/
-    tag/                  TagService interface: simulator and phone GPS
+    backend/              Firebase setup and the bikes/{code} document (publish / watch)
+    tag/                  TagService interface: simulator, this phone's GPS, remote tag
     support/              SupportService interface + mock (customer service / police / insurance)
     notifications.ts      Local notifications
     index.ts              Swap the mocks for real implementations here
@@ -139,9 +216,10 @@ Screens only use the `TagService` and `SupportService` interfaces. So the real t
 
 ### Next steps
 
-- Real tag hardware and pairing it with the app
-- A backend, so the tag and the owner's phone can be separate devices
-- Remote push notifications (needs a development build: `npx expo run:android` or EAS)
+- Real tag hardware writing to the same `bikes/{code}` document
+- Theft check in a Cloud Function + push notifications, so the owner is alerted with the app closed
+  (needs a development build: `npx expo run:android` or EAS)
+- Firebase Auth, so only the owner can see their bike
 - Alarm sound / speaker in the tag (mind the battery use)
 - Skip the alarm automatically when the owner's phone is nearby
 - Real subscription and payments

@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from 'react';
 
-import { supportService, tagSimulator, tagSources, type TagSourceId } from '@/services';
+import { createTagSource, supportService, tagSimulator, tagSourceLabels, type TagSourceId } from '@/services';
 import {
   configureNotifications,
   notifyUnauthorizedMovement,
@@ -28,7 +28,8 @@ type BikeContextValue = BikeState & {
   arm: () => void;
   disarm: () => void;
   setSubscription: (active: boolean) => void;
-  setTagSource: (source: TagSourceId) => void;
+  /** For 'remote', pass the pairing code of the tag to follow. */
+  setTagSource: (source: TagSourceId, remoteBikeId?: string) => void;
   /** Hands the theft over to customer service (police, crime report, insurance). */
   reportTheft: () => Promise<ReportResult>;
   /** "It was me" – closes the incident and turns off monitoring. */
@@ -51,31 +52,31 @@ export function BikeProvider({ children }: { children: ReactNode }) {
       .then((raw) => (raw ? (JSON.parse(raw) as Partial<PersistedState>) : {}))
       .catch((): Partial<PersistedState> => ({}))
       .then((persisted) => {
-        if (persisted.tagSource && !(persisted.tagSource in tagSources)) delete persisted.tagSource;
+        if (persisted.tagSource && !(persisted.tagSource in tagSourceLabels)) delete persisted.tagSource;
         dispatch({ type: 'hydrate', persisted });
       });
   }, []);
 
   // Listen to whichever tag source is selected.
-  const { hydrated, tagSource } = state;
+  const { hydrated, tagSource, remoteBikeId } = state;
   useEffect(() => {
     if (!hydrated) return;
-    const source = tagSources[tagSource];
+    const source = createTagSource(tagSource, remoteBikeId);
     source.start();
     const unsubscribe = source.subscribe((status) => dispatch({ type: 'tagUpdate', status }));
     return () => {
       unsubscribe();
       source.stop();
     };
-  }, [hydrated, tagSource]);
+  }, [hydrated, tagSource, remoteBikeId]);
 
   // Persist the parts that should survive a restart.
   const { armed, parkedAt, subscriptionActive } = state;
   useEffect(() => {
     if (!hydrated) return;
-    const persisted: PersistedState = { tagSource, armed, parkedAt, subscriptionActive };
+    const persisted: PersistedState = { tagSource, remoteBikeId, armed, parkedAt, subscriptionActive };
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(persisted)).catch(() => {});
-  }, [hydrated, tagSource, armed, parkedAt, subscriptionActive]);
+  }, [hydrated, tagSource, remoteBikeId, armed, parkedAt, subscriptionActive]);
 
   // Notifications: set up once, open the alert screen when one is tapped.
   useEffect(() => {
@@ -113,9 +114,9 @@ export function BikeProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const setTagSource = useCallback((source: TagSourceId) => {
+  const setTagSource = useCallback((source: TagSourceId, remoteBikeId?: string) => {
     tagSimulator.stopMovement();
-    dispatch({ type: 'setTagSource', source });
+    dispatch({ type: 'setTagSource', source, remoteBikeId });
   }, []);
 
   const reportTheft = useCallback(async (): Promise<ReportResult> => {

@@ -1,3 +1,4 @@
+import * as Battery from 'expo-battery';
 import * as Location from 'expo-location';
 
 import type { TagStatus } from '@/domain/types';
@@ -8,6 +9,7 @@ import type { TagService } from './TagService';
  * which would otherwise trigger false theft alarms.
  */
 const MAX_ACCURACY_M = 30;
+const BATTERY_REFRESH_MS = 60_000;
 
 type Listener = (status: TagStatus) => void;
 
@@ -19,6 +21,7 @@ export class PhoneLocationTagService implements TagService {
   private listeners = new Set<Listener>();
   private watch: Location.LocationSubscription | null = null;
   private running = false;
+  private batteryReadAt = 0;
   private status: TagStatus = {
     id: 'PHONE-GPS',
     name: 'Puhelimen GPS',
@@ -57,7 +60,11 @@ export class PhoneLocationTagService implements TagService {
     const watch = await Location.watchPositionAsync(
       { accuracy: Location.Accuracy.High, timeInterval: 3000, distanceInterval: 0 },
       ({ coords, timestamp }) => {
-        if (coords.accuracy != null && coords.accuracy > MAX_ACCURACY_M) return;
+        this.refreshBattery();
+        if (coords.accuracy != null && coords.accuracy > MAX_ACCURACY_M) {
+          this.update({ error: `Odotetaan tarkkaa sijaintia (nyt ±${Math.round(coords.accuracy)} m)` });
+          return;
+        }
         this.update({
           connected: true,
           error: undefined,
@@ -73,6 +80,17 @@ export class PhoneLocationTagService implements TagService {
     // stop() may have been called while we were awaiting permission.
     if (this.running) this.watch = watch;
     else watch.remove();
+  }
+
+  private async refreshBattery() {
+    if (Date.now() - this.batteryReadAt < BATTERY_REFRESH_MS) return;
+    this.batteryReadAt = Date.now();
+    try {
+      const level = await Battery.getBatteryLevelAsync(); // 0–1, or -1 if unknown
+      if (level >= 0) this.update({ batteryPercent: level * 100 });
+    } catch {
+      // Battery level is nice to have; ignore platforms that don't support it.
+    }
   }
 
   private update(patch: Partial<TagStatus>) {
