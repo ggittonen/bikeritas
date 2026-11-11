@@ -24,7 +24,7 @@ export class PhoneLocationTagService implements TagService {
   private batteryReadAt = 0;
   private status: TagStatus = {
     id: 'PHONE-GPS',
-    name: 'Puhelimen GPS',
+    name: 'Phone GPS',
     connected: false,
     batteryPercent: null,
     charging: false,
@@ -34,7 +34,7 @@ export class PhoneLocationTagService implements TagService {
   start() {
     if (this.running) return;
     this.running = true;
-    this.begin().catch(() => this.update({ connected: false, error: 'Sijaintia ei saatu' }));
+    this.begin().catch(() => this.update({ connected: false, problem: { code: 'no_location' } }));
   }
 
   stop() {
@@ -54,7 +54,7 @@ export class PhoneLocationTagService implements TagService {
   private async begin() {
     const { granted } = await Location.requestForegroundPermissionsAsync();
     if (!granted) {
-      this.update({ connected: false, error: 'Sijaintilupa puuttuu – salli sijainti asetuksista' });
+      this.update({ connected: false, problem: { code: 'permission' } });
       return;
     }
     const watch = await Location.watchPositionAsync(
@@ -62,12 +62,12 @@ export class PhoneLocationTagService implements TagService {
       ({ coords, timestamp }) => {
         this.refreshBattery();
         if (coords.accuracy != null && coords.accuracy > MAX_ACCURACY_M) {
-          this.update({ error: `Odotetaan tarkkaa sijaintia (nyt ±${Math.round(coords.accuracy)} m)` });
+          this.update({ problem: { code: 'inaccurate', accuracyM: Math.round(coords.accuracy) } });
           return;
         }
         this.update({
           connected: true,
-          error: undefined,
+          problem: undefined,
           lastFix: {
             latitude: coords.latitude,
             longitude: coords.longitude,

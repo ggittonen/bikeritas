@@ -3,11 +3,13 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { BikeMap } from '@/components/BikeMap';
+import { useI18n } from '@/i18n/LanguageContext';
 import { useBike } from '@/state/BikeContext';
 import { colors, spacing } from '@/theme';
 
-/** "Sijainti" tab: full-screen map of where the bike is right now. */
+/** Location tab: full-screen map of where the bike is right now. */
 export default function LocationScreen() {
+  const { s } = useI18n();
   const { tag, armed, parkedAt, incident } = useBike();
 
   return (
@@ -16,7 +18,7 @@ export default function LocationScreen() {
         position={tag?.lastFix ?? null}
         parkedAt={armed ? parkedAt : null}
         path={incident?.path}
-        label="Pyörän sijainti"
+        label={s.common.bikeLocation}
         style={styles.map}
       />
 
@@ -24,16 +26,16 @@ export default function LocationScreen() {
         <Link href="/alert" asChild>
           <Pressable style={styles.alertBar}>
             <AppText bold upper size={18} color={colors.danger}>
-              Huomio!
+              {s.location.alertTitle}
             </AppText>
-            <AppText upper>Pyöräsi liikkuu ilman sinua</AppText>
+            <AppText upper>{s.location.alertBody}</AppText>
           </Pressable>
         </Link>
       ) : (
         <View style={styles.statusBar} pointerEvents="none">
           <View style={[styles.statusDot, { backgroundColor: armed ? colors.success : colors.muted }]} />
           <AppText upper size={13}>
-            {armed ? 'Valvonta päällä' : 'Valvonta pois'}
+            {armed ? s.monitoring.on : s.monitoring.off}
           </AppText>
         </View>
       )}

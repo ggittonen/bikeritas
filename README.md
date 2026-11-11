@@ -7,8 +7,12 @@ report and insurance claim for you.
 
 Built with Expo (SDK 58), React Native, TypeScript and Expo Router.
 
-> The app's interface is in Finnish. Button and tab names below are given as they appear in the app,
-> with English translations where helpful.
+> The app is available in **Finnish and English**. On first launch it asks which one to use and
+> remembers the choice; change it any time in **MUUT / MORE → Kieli / Language**. Button and tab
+> names below are given in Finnish with the English version in brackets.
+>
+> All texts live in [`src/i18n/strings.ts`](src/i18n/strings.ts). TypeScript checks that the
+> English list has every text the Finnish one has.
 
 ---
 

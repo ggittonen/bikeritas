@@ -1,20 +1,23 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { BigButton } from '@/components/BigButton';
 import { Card } from '@/components/Card';
-import { tagSourceLabels, type TagSourceId } from '@/services';
+import { useI18n } from '@/i18n/LanguageContext';
+import { strings, type Language } from '@/i18n/strings';
+import { TAG_SOURCE_IDS, type TagSourceId } from '@/services';
 import { formatBikeId, normalizeBikeId } from '@/services/backend/bikeChannel';
 import { backendConfigured } from '@/services/backend/firebase';
 import { useBike } from '@/state/BikeContext';
 import { colors, fonts, spacing } from '@/theme';
 
-const sourceIds = Object.keys(tagSourceLabels) as TagSourceId[];
+const LANGUAGES: Language[] = ['fi', 'en'];
 
-/** "Muut" tab: subscription, where the location comes from, and tag mode. */
+/** More tab: language, subscription, where the location comes from, and tag mode. */
 export default function MoreScreen() {
+  const { s, language, setLanguage } = useI18n();
   const { tagSource, remoteBikeId, setTagSource, subscriptionActive, setSubscription } = useBike();
   const [showCodeInput, setShowCodeInput] = useState(false);
 
@@ -28,15 +31,23 @@ export default function MoreScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      <Card title="Bikeritas Turva">
+      <Card title={s.more.languageTitle}>
+        <View style={styles.languageRow}>
+          {LANGUAGES.map((lang) => (
+            <Option key={lang} selected={lang === language} onPress={() => setLanguage(lang)} style={styles.flex}>
+              {strings[lang].languageName}
+            </Option>
+          ))}
+        </View>
+      </Card>
+
+      <Card title={s.more.subscriptionTitle}>
         <AppText size={14} style={styles.body}>
-          Kuukausitilaus aktivoi asiakaspalvelun: varkaustilanteessa se ilmoittaa poliisille, tekee
-          rikos- ja vakuutusilmoituksen puolestasi ja välittää pyörän reaaliaikaisen sijainnin
-          viranomaisille.
+          {s.more.subscriptionBody}
         </AppText>
         <View style={styles.switchRow}>
           <AppText upper bold color={subscriptionActive ? colors.success : colors.muted}>
-            {subscriptionActive ? 'Tilaus aktiivinen' : 'Ei tilausta'}
+            {subscriptionActive ? s.more.subscriptionActive : s.more.noSubscription}
           </AppText>
           <Switch
             value={subscriptionActive}
@@ -45,33 +56,22 @@ export default function MoreScreen() {
           />
         </View>
         <AppText size={12} color={colors.muted}>
-          Prototyyppi: maksua ei veloiteta, kytkin vain simuloi tilausta.
+          {s.more.subscriptionNote}
         </AppText>
       </Card>
 
-      <Card title="Sijainnin lähde">
-        {sourceIds.map((id) => {
-          const selected = id === tagSource;
-          return (
-            <Pressable
-              key={id}
-              accessibilityRole="radio"
-              accessibilityState={{ selected }}
-              onPress={() => onSelectSource(id)}
-              style={[styles.option, selected && styles.optionSelected]}
-            >
-              <AppText upper color={selected ? colors.text : colors.muted}>
-                {selected ? '● ' : '○ '}
-                {tagSourceLabels[id]}
+      <Card title={s.more.sourceTitle}>
+        {TAG_SOURCE_IDS.map((id) => (
+          <Option key={id} selected={id === tagSource} onPress={() => onSelectSource(id)}>
+            {s.more.sources[id]}
+            {id === 'remote' && tagSource === 'remote' && remoteBikeId ? (
+              <AppText size={13} color={colors.muted}>
+                {'\n'}
+                {s.more.code(formatBikeId(remoteBikeId))}
               </AppText>
-              {id === 'remote' && selected && remoteBikeId ? (
-                <AppText size={13} color={colors.muted}>
-                  Koodi {formatBikeId(remoteBikeId)}
-                </AppText>
-              ) : null}
-            </Pressable>
-          );
-        })}
+            ) : null}
+          </Option>
+        ))}
         {showCodeInput || (tagSource === 'remote' && !remoteBikeId) ? (
           <PairWithTag
             onPair={(id) => {
@@ -81,29 +81,55 @@ export default function MoreScreen() {
           />
         ) : null}
         <AppText size={12} color={colors.muted}>
-          Lähteen vaihto poistaa valvonnan.
+          {s.more.sourceChangeNote}
         </AppText>
       </Card>
 
-      <Card title="Käytä tätä puhelinta tägina">
+      <Card title={s.more.tagModeTitle}>
         <AppText size={14} style={styles.body}>
-          Laita tämä puhelin pyörän laukkuun. Se lähettää sijaintinsa, ja omistajan puhelin saa
-          hälytyksen, jos pyörä liikkuu.
+          {s.more.tagModeBody}
         </AppText>
-        <BigButton title="Käynnistä tägitila" onPress={() => router.push('/tag-mode')} />
+        <BigButton title={s.more.startTagMode} onPress={() => router.push('/tag-mode')} />
       </Card>
     </ScrollView>
   );
 }
 
+function Option({
+  selected,
+  onPress,
+  children,
+  style,
+}: {
+  selected: boolean;
+  onPress: () => void;
+  children: ReactNode;
+  style?: object;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="radio"
+      accessibilityState={{ selected }}
+      onPress={onPress}
+      style={[styles.option, selected && styles.optionSelected, style]}
+    >
+      <AppText upper color={selected ? colors.text : colors.muted}>
+        {selected ? '● ' : '○ '}
+        {children}
+      </AppText>
+    </Pressable>
+  );
+}
+
 function PairWithTag({ onPair }: { onPair: (bikeId: string) => void }) {
+  const { s } = useI18n();
   const [code, setCode] = useState('');
   const [invalid, setInvalid] = useState(false);
 
   if (!backendConfigured) {
     return (
       <AppText size={13} color={colors.warning}>
-        Backend puuttuu. Lisää Firebase-asetukset tiedostoon .env.local (ohje README:ssä).
+        {s.more.backendMissing}
       </AppText>
     );
   }
@@ -117,7 +143,7 @@ function PairWithTag({ onPair }: { onPair: (bikeId: string) => void }) {
   return (
     <View style={styles.pair}>
       <AppText size={13} color={colors.muted}>
-        Syötä koodi, joka näkyy tägipuhelimen näytöllä.
+        {s.more.pairHint}
       </AppText>
       <TextInput
         value={code}
@@ -132,10 +158,10 @@ function PairWithTag({ onPair }: { onPair: (bikeId: string) => void }) {
       />
       {invalid ? (
         <AppText size={13} color={colors.danger}>
-          Koodissa on 8 merkkiä, esim. AB3K-9XQ2.
+          {s.more.pairInvalid}
         </AppText>
       ) : null}
-      <BigButton title="Yhdistä" onPress={submit} />
+      <BigButton title={s.more.connect} onPress={submit} />
     </View>
   );
 }
@@ -143,8 +169,10 @@ function PairWithTag({ onPair }: { onPair: (bikeId: string) => void }) {
 const styles = StyleSheet.create({
   content: { padding: spacing.md, gap: spacing.md },
   body: { lineHeight: 21 },
+  flex: { flex: 1 },
+  languageRow: { flexDirection: 'row', gap: spacing.sm },
   switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  option: { padding: spacing.md, borderWidth: 2, borderColor: colors.divider, gap: spacing.xs },
+  option: { padding: spacing.md, borderWidth: 2, borderColor: colors.divider },
   optionSelected: { borderColor: colors.text },
   pair: { gap: spacing.sm },
   input: {

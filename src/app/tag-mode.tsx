@@ -8,6 +8,7 @@ import { BigButton } from '@/components/BigButton';
 import { Card, Row } from '@/components/Card';
 import type { TagStatus } from '@/domain/types';
 import { formatPercent, formatTime } from '@/format';
+import { useI18n } from '@/i18n/LanguageContext';
 import { formatBikeId, publishTagStatus } from '@/services/backend/bikeChannel';
 import { backendConfigured } from '@/services/backend/firebase';
 import { getOrCreateOwnTagId } from '@/services/backend/ownTagId';
@@ -20,10 +21,11 @@ import { colors, spacing } from '@/theme';
  */
 export default function TagModeScreen() {
   useKeepAwake(); // the screen must stay on, or the phone stops sending
+  const { s } = useI18n();
   const [bikeId, setBikeId] = useState<string | null>(null);
   const [status, setStatus] = useState<TagStatus | null>(null);
   const [lastSent, setLastSent] = useState<number | null>(null);
-  const [sendError, setSendError] = useState<string | null>(null);
+  const [sendFailed, setSendFailed] = useState(false);
 
   useEffect(() => {
     getOrCreateOwnTagId().then(setBikeId);
@@ -41,12 +43,12 @@ export default function TagModeScreen() {
       const fixTime = next.lastFix?.timestamp ?? null;
       if (fixTime === lastSentFix) return;
       lastSentFix = fixTime;
-      publishTagStatus(bikeId, { ...next, name: 'Oma pyörä' })
+      publishTagStatus(bikeId, { ...next, name: 'Bikeritas tag' })
         .then(() => {
           setLastSent(Date.now());
-          setSendError(null);
+          setSendFailed(false);
         })
-        .catch(() => setSendError('Lähetys epäonnistui – tarkista verkkoyhteys.'));
+        .catch(() => setSendFailed(true));
     });
     return () => {
       unsubscribe();
@@ -58,13 +60,10 @@ export default function TagModeScreen() {
     return (
       <View style={styles.content}>
         <AppText bold upper size={20} color={colors.warning}>
-          Backend puuttuu
+          {s.tagMode.backendMissingTitle}
         </AppText>
-        <AppText>
-          Tägitila tarvitsee Firebasen. Lisää asetukset tiedostoon .env.local (ohje README:ssä) ja
-          käynnistä palvelin uudelleen.
-        </AppText>
-        <BigButton title="Takaisin" onPress={() => router.back()} />
+        <AppText>{s.tagMode.backendMissingBody}</AppText>
+        <BigButton title={s.common.back} onPress={() => router.back()} />
       </View>
     );
   }
@@ -75,34 +74,33 @@ export default function TagModeScreen() {
     <ScrollView contentContainerStyle={styles.content}>
       <View style={styles.center}>
         <AppText upper color={colors.muted}>
-          Tämä puhelin on pyörän tägi
+          {s.tagMode.thisPhoneIsTag}
         </AppText>
         <AppText upper color={colors.muted} size={13}>
-          Syötä koodi omistajan puhelimeen
+          {s.tagMode.enterCode}
         </AppText>
         <AppText bold size={40} style={styles.code} selectable>
           {bikeId ? formatBikeId(bikeId) : '…'}
         </AppText>
       </View>
 
-      <Card title="Tila">
-        <Row label="GPS" value={fix ? 'OK' : 'Odotetaan…'} />
-        <Row label="Viimeisin sijainti" value={fix ? formatTime(fix.timestamp) : '–'} />
-        <Row label="Lähetetty" value={lastSent ? formatTime(lastSent) : '–'} />
+      <Card title={s.tagMode.status}>
+        <Row label={s.tagMode.gps} value={fix ? 'OK' : s.tagMode.waiting} />
+        <Row label={s.incident.lastLocation} value={fix ? formatTime(fix.timestamp, s.locale) : '–'} />
+        <Row label={s.tagMode.sent} value={lastSent ? formatTime(lastSent, s.locale) : '–'} />
         <Row
-          label="Akku"
+          label={s.bikes.battery}
           value={status?.batteryPercent != null ? formatPercent(status.batteryPercent) : '–'}
         />
-        {status?.error ? <AppText color={colors.warning}>{status.error}</AppText> : null}
-        {sendError ? <AppText color={colors.danger}>{sendError}</AppText> : null}
+        {status?.problem ? <AppText color={colors.warning}>{s.tagProblem(status.problem)}</AppText> : null}
+        {sendFailed ? <AppText color={colors.danger}>{s.tagMode.sendFailed}</AppText> : null}
       </Card>
 
       <AppText size={13} color={colors.muted}>
-        Pidä sovellus auki tässä näkymässä. Näyttö pysyy päällä automaattisesti. Laita puhelin
-        pyörän laukkuun.
+        {s.tagMode.keepOpen}
       </AppText>
 
-      <BigButton title="Lopeta tägitila" variant="secondary" onPress={() => router.back()} />
+      <BigButton title={s.tagMode.stop} variant="secondary" onPress={() => router.back()} />
     </ScrollView>
   );
 }

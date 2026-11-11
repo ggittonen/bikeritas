@@ -5,21 +5,23 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { AppText } from '@/components/AppText';
 import { BigButton } from '@/components/BigButton';
 import { BikeMap } from '@/components/BikeMap';
+import { useI18n } from '@/i18n/LanguageContext';
 import { useBike } from '@/state/BikeContext';
 import { colors, spacing } from '@/theme';
 
 /** Shown the moment unauthorized movement is detected: two big, obvious choices. */
 export default function AlertScreen() {
+  const { s } = useI18n();
   const { incident, tag, reportTheft, dismissIncident } = useBike();
   const [reporting, setReporting] = useState(false);
   // Shown inline rather than with Alert.alert, which does nothing on web.
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<'needSubscription' | 'failed' | null>(null);
 
   if (!incident) {
     return (
       <View style={[styles.content, styles.center]}>
-        <AppText upper>Ei aktiivisia hälytyksiä.</AppText>
-        <BigButton title="Takaisin" onPress={() => router.back()} />
+        <AppText upper>{s.alert.none}</AppText>
+        <BigButton title={s.common.back} onPress={() => router.back()} />
       </View>
     );
   }
@@ -30,11 +32,11 @@ export default function AlertScreen() {
     const result = await reportTheft();
     setReporting(false);
     if (result === 'no_subscription') {
-      setMessage('Poliisi-ilmoitus asiakaspalvelun kautta vaatii Bikeritas Turva -tilauksen (Muut-välilehti).');
+      setMessage('needSubscription');
       return;
     }
     if (result === 'failed') {
-      setMessage('Ilmoitus epäonnistui. Tarkista verkkoyhteys ja yritä uudelleen.');
+      setMessage('failed');
       return;
     }
     router.replace('/incident');
@@ -51,10 +53,10 @@ export default function AlertScreen() {
     <ScrollView contentContainerStyle={styles.content}>
       <View style={styles.center}>
         <AppText bold upper size={32} color={colors.danger}>
-          Huomio!
+          {s.alert.title}
         </AppText>
         <AppText upper size={20} style={styles.centerText}>
-          Pyöräsi liikkuu{'\n'}ilman sinua.
+          {s.alert.body}
         </AppText>
       </View>
 
@@ -62,14 +64,14 @@ export default function AlertScreen() {
 
       <Pressable onPress={() => router.replace('/incident')} style={styles.center}>
         <AppText upper size={18} style={styles.link}>
-          Avaa kartta
+          {s.alert.openMap}
         </AppText>
       </Pressable>
 
       <View style={styles.choices}>
-        <BigButton title="Ei huolta" onPress={onNoWorries} style={styles.choice} />
+        <BigButton title={s.alert.noWorries} onPress={onNoWorries} style={styles.choice} />
         <BigButton
-          title={reported ? 'Ilmoitettu' : 'Epäilen varkautta'}
+          title={reported ? s.alert.reported : s.alert.suspectTheft}
           onPress={onSuspectTheft}
           loading={reporting}
           disabled={reported}
@@ -79,7 +81,7 @@ export default function AlertScreen() {
 
       {message ? (
         <AppText color={colors.warning} style={styles.centerText}>
-          {message}
+          {s.alert[message]}
         </AppText>
       ) : null}
     </ScrollView>

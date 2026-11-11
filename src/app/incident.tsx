@@ -6,24 +6,20 @@ import { BigButton } from '@/components/BigButton';
 import { BikeMap } from '@/components/BikeMap';
 import { Card, Row } from '@/components/Card';
 import { formatTime } from '@/format';
+import { useI18n } from '@/i18n/LanguageContext';
 import { useBike } from '@/state/BikeContext';
 import { colors, spacing } from '@/theme';
 
-const STATUS_LABEL = {
-  detected: 'Ei vielä ilmoitettu',
-  reporting: 'Ilmoitetaan…',
-  police_notified: 'Poliisi tietää',
-} as const;
-
 export default function IncidentScreen() {
+  const { s } = useI18n();
   const { incident, tag, markRecovered } = useBike();
   const fix = tag?.lastFix ?? null;
 
   if (!incident) {
     return (
       <View style={styles.content}>
-        <AppText upper>Ei aktiivista tapausta.</AppText>
-        <BigButton title="Etusivulle" onPress={() => router.dismissTo('/')} />
+        <AppText upper>{s.incident.none}</AppText>
+        <BigButton title={s.common.home} onPress={() => router.dismissTo('/')} />
       </View>
     );
   }
@@ -35,32 +31,32 @@ export default function IncidentScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <BikeMap position={fix} path={incident.path} label="Pyörän sijainti" style={styles.map} />
+      <BikeMap position={fix} path={incident.path} label={s.common.bikeLocation} style={styles.map} />
 
-      <Card title="Tilanne">
-        <Row label="Tila" value={STATUS_LABEL[incident.status]} />
-        <Row label="Nopeus" value={fix ? `${Math.round(fix.speedKmh)} km/h` : '–'} />
-        <Row label="Viimeisin sijainti" value={fix ? formatTime(fix.timestamp) : '–'} />
-        {incident.supportCaseId ? <Row label="Tapausnumero" value={incident.supportCaseId} /> : null}
+      <Card title={s.incident.situation}>
+        <Row label={s.incident.state} value={s.incident.statuses[incident.status]} />
+        <Row label={s.incident.speed} value={fix ? `${Math.round(fix.speedKmh)} km/h` : '–'} />
+        <Row label={s.incident.lastLocation} value={fix ? formatTime(fix.timestamp, s.locale) : '–'} />
+        {incident.supportCaseId ? <Row label={s.incident.caseNumber} value={incident.supportCaseId} /> : null}
       </Card>
 
-      <Card title="Tapahtumat">
+      <Card title={s.incident.events}>
         {incident.timeline.map((event, i) => (
           <View key={i} style={styles.event}>
             <AppText size={13} color={colors.muted}>
-              {formatTime(event.at)}
+              {formatTime(event.at, s.locale)}
             </AppText>
             <AppText size={14} style={styles.eventText}>
-              {event.message}
+              {s.incident.event(event)}
             </AppText>
           </View>
         ))}
       </Card>
 
       {incident.status === 'detected' ? (
-        <BigButton title="Epäilen varkautta" variant="danger" onPress={() => router.push('/alert')} />
+        <BigButton title={s.alert.suspectTheft} variant="danger" onPress={() => router.push('/alert')} />
       ) : null}
-      <BigButton title="Pyörä saatu takaisin" onPress={onRecovered} />
+      <BigButton title={s.incident.recovered} onPress={onRecovered} />
     </ScrollView>
   );
 }

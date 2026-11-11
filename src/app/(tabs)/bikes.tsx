@@ -7,14 +7,16 @@ import { BikeIcon } from '@/components/icons';
 import { distanceMeters } from '@/domain/geo';
 import { MOVEMENT_THRESHOLD_M } from '@/domain/movementDetection';
 import { formatPercent, formatTime } from '@/format';
+import { useI18n } from '@/i18n/LanguageContext';
 import { tagSimulator } from '@/services';
 import { useBike } from '@/state/BikeContext';
 import { colors, spacing } from '@/theme';
 
 const LOW_BATTERY_PERCENT = 20;
 
-/** "Pyörät" tab: the bike, its tag and turning monitoring on/off. */
+/** Bikes tab: the bike, its tag and turning monitoring on/off. */
 export default function BikesScreen() {
+  const { s } = useI18n();
   const { tag, tagSource, armed, parkedAt, incident, arm, disarm } = useBike();
   const fix = tag?.lastFix ?? null;
   const battery = tag?.batteryPercent ?? null;
@@ -27,51 +29,47 @@ export default function BikesScreen() {
       <View style={styles.hero}>
         <BikeIcon size={56} />
         <AppText upper size={20}>
-          {tag?.name ?? 'Oma pyörä'}
+          {s.common.myBike}
         </AppText>
         <AppText upper bold color={armed ? colors.success : colors.muted}>
-          {armed ? 'Valvonta päällä' : 'Valvonta pois'}
+          {armed ? s.monitoring.on : s.monitoring.off}
         </AppText>
       </View>
 
       {incident ? null : (
         <>
           <BigButton
-            title={armed ? 'Poista valvonta' : 'Aktivoi valvonta'}
+            title={armed ? s.monitoring.turnOff : s.monitoring.turnOn}
             variant={armed ? 'secondary' : 'primary'}
             onPress={armed ? disarm : arm}
             disabled={!fix}
           />
           <AppText color={colors.muted} size={13} style={styles.center}>
-            Saat hälytyksen, jos pyörä liikkuu yli {MOVEMENT_THRESHOLD_M} m pysäköintipaikasta.
+            {s.monitoring.hint(MOVEMENT_THRESHOLD_M)}
           </AppText>
         </>
       )}
 
-      <Card title="Tägi">
-        <Row label="Yhteys" value={tag?.connected ? 'Yhdistetty' : 'Ei yhteyttä'} />
-        <Row label="Akku" value={battery !== null ? formatPercent(battery) : '–'} />
-        <Row label="Päivitetty" value={fix ? formatTime(fix.timestamp) : '–'} />
+      <Card title={s.bikes.tag}>
+        <Row label={s.bikes.connection} value={tag?.connected ? s.bikes.connected : s.bikes.disconnected} />
+        <Row label={s.bikes.battery} value={battery !== null ? formatPercent(battery) : '–'} />
+        <Row label={s.bikes.updated} value={fix ? formatTime(fix.timestamp, s.locale) : '–'} />
         {distance !== null ? (
-          <Row label="Etäisyys pysäköinnistä" value={`${Math.round(distance)}/${MOVEMENT_THRESHOLD_M} m`} />
+          <Row label={s.bikes.distance} value={`${Math.round(distance)}/${MOVEMENT_THRESHOLD_M} m`} />
         ) : null}
-        {tag?.error ? <AppText color={colors.warning}>{tag.error}</AppText> : null}
-        {lowBattery ? <AppText color={colors.warning}>Akku vähissä – lataa tägi johdolla.</AppText> : null}
+        {tag?.problem ? <AppText color={colors.warning}>{s.tagProblem(tag.problem)}</AppText> : null}
+        {lowBattery ? <AppText color={colors.warning}>{s.bikes.lowBattery}</AppText> : null}
       </Card>
 
       {__DEV__ && tagSource === 'simulator' ? (
-        <Card title="Testaustila">
+        <Card title={s.bikes.testMode}>
           <BigButton
-            title={simulatorMoving ? 'Pysäytä pyörä' : 'Simuloi varkaus'}
+            title={simulatorMoving ? s.bikes.stopBike : s.bikes.simulateTheft}
             variant="secondary"
             onPress={simulatorMoving ? tagSimulator.stopMovement : tagSimulator.simulateTheft}
           />
           <AppText color={colors.muted} size={13}>
-            {simulatorMoving
-              ? 'Pyörä liikkuu…'
-              : armed
-                ? 'Hälytys tulee, kun pyörä on yli rajan päässä (noin 10 s).'
-                : 'Aktivoi valvonta ensin, muuten varkaus ei hälytä.'}
+            {simulatorMoving ? s.bikes.moving : armed ? s.bikes.willAlert : s.bikes.armFirst}
           </AppText>
         </Card>
       ) : null}

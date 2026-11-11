@@ -17,15 +17,37 @@ export type TagStatus = {
   batteryPercent: number | null;
   charging: boolean;
   lastFix: LocationFix | null;
-  /** Human-readable problem, e.g. missing location permission. */
-  error?: string;
+  /** Something the user should know, e.g. missing permission. Shown translated by the UI. */
+  problem?: TagProblem;
+};
+
+export type TagProblem = {
+  code:
+    | 'permission'
+    | 'no_location'
+    | 'inaccurate'
+    | 'backend_missing'
+    | 'no_code'
+    | 'not_found'
+    | 'backend_lost'
+    | 'stale';
+  accuracyM?: number;
 };
 
 export type IncidentStatus = 'detected' | 'reporting' | 'police_notified';
 
+/** Timeline entry. Stored as a kind (not text) so it can be shown in any language. */
 export type IncidentEvent = {
   at: number;
-  message: string;
+  kind:
+    | 'detected'
+    | 'sent_to_support'
+    | 'police_notified'
+    | 'crime_report'
+    | 'insurance_claim'
+    | 'sharing_location'
+    | 'report_failed';
+  caseId?: string;
 };
 
 /** An unauthorized-movement episode, from detection until recovered or dismissed. */

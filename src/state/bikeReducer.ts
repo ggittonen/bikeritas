@@ -1,5 +1,12 @@
 import { isUnauthorizedMovement } from '@/domain/movementDetection';
-import type { Coordinate, Incident, IncidentStatus, LocationFix, TagStatus } from '@/domain/types';
+import type {
+  Coordinate,
+  Incident,
+  IncidentEvent,
+  IncidentStatus,
+  LocationFix,
+  TagStatus,
+} from '@/domain/types';
 import type { TagSourceId } from '@/services';
 
 /** The part of the state that survives app restarts. */
@@ -25,7 +32,7 @@ export type BikeAction =
   | { type: 'disarm' }
   | { type: 'setSubscription'; active: boolean }
   | { type: 'setTagSource'; source: TagSourceId; remoteBikeId?: string }
-  | { type: 'incidentProgress'; message: string; status?: IncidentStatus; supportCaseId?: string }
+  | { type: 'incidentProgress'; event: IncidentEvent['kind']; status?: IncidentStatus; supportCaseId?: string }
   | { type: 'incidentClosed' };
 
 export const initialBikeState: BikeState = {
@@ -45,7 +52,7 @@ function newIncident(parkedAt: Coordinate, fix: LocationFix): Incident {
     startedAt: fix.timestamp,
     status: 'detected',
     path: [parkedAt, fix],
-    timeline: [{ at: fix.timestamp, message: 'Luvaton liike havaittu' }],
+    timeline: [{ at: fix.timestamp, kind: 'detected' }],
   };
 }
 
@@ -92,14 +99,14 @@ export function bikeReducer(state: BikeState, action: BikeAction): BikeState {
 
     case 'incidentProgress': {
       if (!state.incident) return state;
-      const { message, status, supportCaseId } = action;
+      const { event, status, supportCaseId } = action;
       return {
         ...state,
         incident: {
           ...state.incident,
           status: status ?? state.incident.status,
           supportCaseId: supportCaseId ?? state.incident.supportCaseId,
-          timeline: [...state.incident.timeline, { at: Date.now(), message }],
+          timeline: [...state.incident.timeline, { at: Date.now(), kind: event, caseId: supportCaseId }],
         },
       };
     }

@@ -11,13 +11,14 @@ import {
   type ReactNode,
 } from 'react';
 
-import { createTagSource, supportService, tagSimulator, tagSourceLabels, type TagSourceId } from '@/services';
+import { createTagSource, supportService, tagSimulator, TAG_SOURCE_IDS, type TagSourceId } from '@/services';
 import {
   configureNotifications,
   notifyUnauthorizedMovement,
   onNotificationOpened,
   requestNotificationPermission,
 } from '@/services/notifications';
+import { useI18n } from '@/i18n/LanguageContext';
 import { bikeReducer, initialBikeState, type BikeState, type PersistedState } from './bikeReducer';
 
 const STORAGE_KEY = 'bikeritas/state/v1';
@@ -41,6 +42,12 @@ const BikeContext = createContext<BikeContextValue | null>(null);
 
 export function BikeProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(bikeReducer, initialBikeState);
+  const { s } = useI18n();
+  // Read through a ref so a language change doesn't re-run the new-incident effect.
+  const notificationTextRef = useRef(s.notification);
+  useEffect(() => {
+    notificationTextRef.current = s.notification;
+  });
   const stateRef = useRef(state);
   useEffect(() => {
     stateRef.current = state;
@@ -52,7 +59,7 @@ export function BikeProvider({ children }: { children: ReactNode }) {
       .then((raw) => (raw ? (JSON.parse(raw) as Partial<PersistedState>) : {}))
       .catch((): Partial<PersistedState> => ({}))
       .then((persisted) => {
-        if (persisted.tagSource && !(persisted.tagSource in tagSourceLabels)) delete persisted.tagSource;
+        if (persisted.tagSource && !TAG_SOURCE_IDS.includes(persisted.tagSource)) delete persisted.tagSource;
         dispatch({ type: 'hydrate', persisted });
       });
   }, []);
@@ -91,7 +98,8 @@ export function BikeProvider({ children }: { children: ReactNode }) {
   const incidentId = state.incident?.id;
   useEffect(() => {
     if (!incidentId) return;
-    notifyUnauthorizedMovement();
+    const { title, body } = notificationTextRef.current;
+    notifyUnauthorizedMovement(title, body);
     router.push('/alert');
   }, [incidentId]);
 
@@ -125,7 +133,7 @@ export function BikeProvider({ children }: { children: ReactNode }) {
     if (incident.status !== 'detected') return 'already_reported';
     if (!subscriptionActive) return 'no_subscription';
 
-    dispatch({ type: 'incidentProgress', status: 'reporting', message: 'Ilmoitus lähetetty asiakaspalveluun' });
+    dispatch({ type: 'incidentProgress', status: 'reporting', event: 'sent_to_support' });
     try {
       const supportCase = await supportService.reportTheft({
         incidentId: incident.id,
@@ -138,18 +146,18 @@ export function BikeProvider({ children }: { children: ReactNode }) {
         type: 'incidentProgress',
         status: 'police_notified',
         supportCaseId: supportCase.caseId,
-        message: `Poliisille ilmoitettu (tapaus ${supportCase.caseId})`,
+        event: 'police_notified',
       });
       if (supportCase.crimeReportFiled) {
-        dispatch({ type: 'incidentProgress', message: 'Rikosilmoitus tehty puolestasi' });
+        dispatch({ type: 'incidentProgress', event: 'crime_report' });
       }
       if (supportCase.insuranceClaimFiled) {
-        dispatch({ type: 'incidentProgress', message: 'Vakuutusilmoitus tehty puolestasi' });
+        dispatch({ type: 'incidentProgress', event: 'insurance_claim' });
       }
-      dispatch({ type: 'incidentProgress', message: 'Reaaliaikainen sijainti jaetaan viranomaisille' });
+      dispatch({ type: 'incidentProgress', event: 'sharing_location' });
       return 'ok';
     } catch {
-      dispatch({ type: 'incidentProgress', status: 'detected', message: 'Ilmoitus epäonnistui – yritä uudelleen' });
+      dispatch({ type: 'incidentProgress', status: 'detected', event: 'report_failed' });
       return 'failed';
     }
   }, []);

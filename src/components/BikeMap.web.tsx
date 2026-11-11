@@ -2,6 +2,7 @@ import type * as Leaflet from 'leaflet';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { useI18n } from '@/i18n/LanguageContext';
 import { colors } from '@/theme';
 import { AppText } from './AppText';
 import type { BikeMapProps } from './BikeMap';
@@ -28,6 +29,7 @@ type Layers = {
 
 /** Browser version: react-native-maps has no web support, so draw an OpenStreetMap map with Leaflet. */
 export function BikeMap({ position, parkedAt, path, label, style }: BikeMapProps) {
+  const { s } = useI18n();
   // On web a View renders a <div>; Leaflet draws into it.
   const containerRef = useRef<HTMLElement | null>(null);
   const [layers, setLayers] = useState<Layers | null>(null);
@@ -92,7 +94,7 @@ export function BikeMap({ position, parkedAt, path, label, style }: BikeMapProps
       />
       {position ? null : (
         <AppText upper color={colors.muted}>
-          Odotetaan sijaintia…
+          {s.common.waitingForLocation}
         </AppText>
       )}
       {label ? <MapLabel text={label} /> : null}

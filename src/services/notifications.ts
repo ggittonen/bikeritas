@@ -16,7 +16,7 @@ export function configureNotifications() {
   });
   if (Platform.OS === 'android') {
     Notifications.setNotificationChannelAsync('default', {
-      name: 'Varkaushälytykset',
+      name: 'Varkaushälytykset / Theft alerts', // shown in Android settings; created before a language is known
       importance: AndroidImportance.MAX,
     });
   }
@@ -28,12 +28,13 @@ export async function requestNotificationPermission(): Promise<boolean> {
   return granted;
 }
 
-export async function notifyUnauthorizedMovement() {
+/** `title` and `body` come from the UI so they're in the user's language. */
+export async function notifyUnauthorizedMovement(title: string, body: string) {
   if (!supported) return;
   await Notifications.scheduleNotificationAsync({
     content: {
-      title: 'Pyöräsi liikkuu!',
-      body: 'Havaitsimme luvattoman liikkeen. Avaa sovellus ja valitse mitä tehdään.',
+      title,
+      body,
       data: { route: '/alert' },
     },
     trigger: null,

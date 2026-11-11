@@ -5,13 +5,8 @@ import { PhoneLocationTagService } from './tag/PhoneLocationTagService';
 import { RemoteTagService } from './tag/RemoteTagService';
 import type { TagService, TagSimulator } from './tag/TagService';
 
-export type TagSourceId = 'simulator' | 'phone' | 'remote';
-
-export const tagSourceLabels: Record<TagSourceId, string> = {
-  simulator: 'Simulaatio',
-  phone: 'Tämän puhelimen GPS',
-  remote: 'Pyörän tägi (toinen puhelin)',
-};
+export const TAG_SOURCE_IDS = ['simulator', 'phone', 'remote'] as const;
+export type TagSourceId = (typeof TAG_SOURCE_IDS)[number];
 
 // The simulator is shared so the test-mode buttons can drive it.
 const simulator = new MockTagService();

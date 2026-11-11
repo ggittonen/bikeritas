@@ -3,6 +3,7 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 
 import type { Coordinate } from '@/domain/types';
+import { useI18n } from '@/i18n/LanguageContext';
 import { colors } from '@/theme';
 import { AppText } from './AppText';
 import { MapLabel } from './MapLabel';
@@ -19,6 +20,7 @@ export type BikeMapProps = {
 const DELTA = { latitudeDelta: 0.004, longitudeDelta: 0.004 };
 
 export function BikeMap({ position, parkedAt, path, label, style }: BikeMapProps) {
+  const { s } = useI18n();
   const mapRef = useRef<MapView>(null);
   const lat = position?.latitude;
   const lon = position?.longitude;
@@ -37,11 +39,11 @@ export function BikeMap({ position, parkedAt, path, label, style }: BikeMapProps
             <Polyline coordinates={path} strokeColor={colors.danger} strokeWidth={4} />
           ) : null}
           {parkedAt ? (
-            <Marker coordinate={parkedAt} anchor={{ x: 0.5, y: 0.5 }} title="Pysäköity">
+            <Marker coordinate={parkedAt} anchor={{ x: 0.5, y: 0.5 }} title={s.common.parked}>
               <View style={styles.parkedDot} />
             </Marker>
           ) : null}
-          <Marker coordinate={position} anchor={{ x: 0.5, y: 0.5 }} title="Pyörä">
+          <Marker coordinate={position} anchor={{ x: 0.5, y: 0.5 }} title={s.common.bike}>
             <View style={styles.halo}>
               <View style={styles.dot} />
             </View>
@@ -49,7 +51,7 @@ export function BikeMap({ position, parkedAt, path, label, style }: BikeMapProps
         </MapView>
       ) : (
         <AppText upper color={colors.muted}>
-          Odotetaan sijaintia…
+          {s.common.waitingForLocation}
         </AppText>
       )}
       {label ? <MapLabel text={label} /> : null}

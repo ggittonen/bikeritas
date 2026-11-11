@@ -2,9 +2,11 @@ import { Tabs } from 'expo-router/js-tabs';
 
 import { brandHeaderOptions } from '@/components/BrandHeader';
 import { BikeIcon, MenuIcon, PinIcon } from '@/components/icons';
+import { useI18n } from '@/i18n/LanguageContext';
 import { colors, fonts } from '@/theme';
 
 export default function TabsLayout() {
+  const { s } = useI18n();
   return (
     <Tabs
       screenOptions={{
@@ -18,15 +20,15 @@ export default function TabsLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ title: 'SIJAINTI', tabBarIcon: ({ color }) => <PinIcon color={color} /> }}
+        options={{ title: s.tabs.location, tabBarIcon: ({ color }) => <PinIcon color={color} /> }}
       />
       <Tabs.Screen
         name="bikes"
-        options={{ title: 'PYÖRÄT', tabBarIcon: ({ color }) => <BikeIcon color={color} size={28} /> }}
+        options={{ title: s.tabs.bikes, tabBarIcon: ({ color }) => <BikeIcon color={color} size={28} /> }}
       />
       <Tabs.Screen
         name="more"
-        options={{ title: 'MUUT', tabBarIcon: ({ color }) => <MenuIcon color={color} size={22} /> }}
+        options={{ title: s.tabs.more, tabBarIcon: ({ color }) => <MenuIcon color={color} size={22} /> }}
       />
     </Tabs>
   );

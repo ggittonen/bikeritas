@@ -32,8 +32,8 @@ export class RemoteTagService implements TagService {
 
   start() {
     if (this.unwatch) return;
-    if (!backendConfigured) return this.update({ error: 'Backend puuttuu – katso README (Firebase).' });
-    if (!this.bikeId) return this.update({ error: 'Syötä tägin koodi MUUT-välilehdellä.' });
+    if (!backendConfigured) return this.update({ problem: { code: 'backend_missing' } });
+    if (!this.bikeId) return this.update({ problem: { code: 'no_code' } });
 
     this.unwatch = watchBike(
       this.bikeId,
@@ -41,7 +41,7 @@ export class RemoteTagService implements TagService {
         this.bike = bike;
         this.refresh();
       },
-      () => this.update({ connected: false, error: 'Yhteys backendiin katkesi.' }),
+      () => this.update({ connected: false, problem: { code: 'backend_lost' } }),
     );
     // Re-check freshness even when no new data arrives.
     this.staleTimer = setInterval(() => this.refresh(), 5000);
@@ -65,7 +65,7 @@ export class RemoteTagService implements TagService {
   private refresh() {
     const bike = this.bike;
     if (!bike) {
-      this.update({ connected: false, error: 'Tägiä ei löydy tällä koodilla. Onko tägitila päällä?' });
+      this.update({ connected: false, problem: { code: 'not_found' } });
       return;
     }
     const fresh = Date.now() - bike.updatedAt < STALE_AFTER_MS;
@@ -73,7 +73,7 @@ export class RemoteTagService implements TagService {
       connected: fresh,
       batteryPercent: bike.batteryPercent,
       lastFix: bike.lastFix,
-      error: fresh ? undefined : 'Tägi ei ole lähettänyt sijaintia hetkeen.',
+      problem: fresh ? undefined : { code: 'stale' },
     });
   }
 
@@ -83,7 +83,7 @@ export class RemoteTagService implements TagService {
     const changed =
       next.lastFix?.timestamp !== this.status.lastFix?.timestamp ||
       next.connected !== this.status.connected ||
-      next.error !== this.status.error ||
+      next.problem?.code !== this.status.problem?.code ||
       next.batteryPercent !== this.status.batteryPercent;
     this.status = next;
     if (changed) this.listeners.forEach((l) => l(this.status));
