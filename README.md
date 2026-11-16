@@ -106,7 +106,7 @@ code and the HUOMIO! screen appears in the browser when the bike moves.
 ## Try a theft scenario
 
 On first launch the app asks for the language, then for the **bike's details** (make, model,
-colour, frame number, photos, receipt). You can skip that and fill it in later under **MUUT** (More).
+colour, frame number, photos, receipt, insurer and policy number). You can skip that and fill it in later under **MUUT** (More).
 
 The simulated bike is parked at **Maarintie 8** (TUAS, Otaniemi).
 
@@ -120,7 +120,7 @@ The simulated bike is parked at **Maarintie 8** (TUAS, Otaniemi).
 4. *Epäilen varkautta* opens a **confirmation screen**. Nothing is sent until you confirm:
    - **With Bikeritas Turva** (turn it on in **MUUT**; it's simulated, nothing is charged): the
      screen lists what is shared (live location, bike details, photos, receipt) and with whom
-     (customer service, the police, your insurer). Then *Vahvista ja ilmoita* (Confirm and report).
+     (customer service, the police, and your insurer by name if one is saved). Then *Vahvista ja ilmoita* (Confirm and report).
    - **Without it:** the screen opens the police's online crime report and shows your saved bike
      details to copy.
 5. The tracking screen shows the route, the **progress of the crime report and insurance claim**

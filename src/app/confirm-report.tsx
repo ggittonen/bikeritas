@@ -12,7 +12,9 @@ import { useBike } from '@/state/BikeContext';
 import { colors, spacing } from '@/theme';
 
 const hasDetails = (p: BikeProfile) =>
-  Boolean(p.make || p.model || p.color || p.frameNumber || p.photos.length || p.receiptUri);
+  Boolean(
+    p.make || p.model || p.color || p.frameNumber || p.photos.length || p.receiptUri || p.insurer,
+  );
 
 /**
  * Opens after "I suspect theft". Testers wanted control: nothing goes to
@@ -83,11 +85,15 @@ export default function ConfirmReportScreen() {
       <ProfileCard s={s} profile={profile} />
 
       <Card title={s.confirm.recipientsTitle}>
-        {s.confirm.recipients.map((r) => (
-          <AppText key={r} size={14}>
-            • {r}
+        <AppText size={14}>• {s.confirm.recipientSupport}</AppText>
+        <AppText size={14}>• {s.confirm.recipientPolice}</AppText>
+        {profile.insurer ? (
+          <AppText size={14}>• {s.confirm.recipientInsurer(profile.insurer, profile.policyNumber)}</AppText>
+        ) : (
+          <AppText size={13} color={colors.warning}>
+            {s.confirm.noInsurer}
           </AppText>
-        ))}
+        )}
       </Card>
 
       {failed ? <AppText color={colors.danger}>{s.alert.failed}</AppText> : null}
@@ -116,6 +122,8 @@ function ProfileCard({ s, profile }: { s: Strings; profile: BikeProfile }) {
       <Row label={s.setup.color} value={profile.color || '–'} />
       <Row label={s.setup.frameNumber} value={profile.frameNumber || '–'} />
       <Row label={s.confirm.receipt} value={profile.receiptUri ? s.common.yes : s.common.no} />
+      <Row label={s.confirm.insurer} value={profile.insurer || '–'} />
+      <Row label={s.confirm.policyNumber} value={profile.policyNumber || '–'} />
       <AppText size={13} color={colors.muted}>
         {s.confirm.photos(profile.photos.length)}
       </AppText>

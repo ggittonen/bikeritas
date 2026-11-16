@@ -15,26 +15,30 @@ const DEMO_STEPS: ReportProgress[] = [
 const STEP_MS = 6000;
 
 export class MockSupportService implements SupportService {
+  /** Cases that include an insurance claim (an insurer was saved). */
+  private casesWithClaim = new Set<string>();
+
   async reportTheft(report: TheftReport): Promise<SupportCase> {
     await wait(1500);
-    return {
-      caseId: `CASE-${report.incidentId.slice(-6).toUpperCase()}`,
-      policeNotified: true,
-      crimeReportFiled: true,
-      insuranceClaimFiled: true,
-    };
+    const caseId = `CASE-${report.incidentId.slice(-6).toUpperCase()}`;
+    const hasInsurer = report.profile.insurer.trim() !== '';
+    if (hasInsurer) this.casesWithClaim.add(caseId);
+    return { caseId, policeNotified: true, crimeReportFiled: true, insuranceClaimFiled: hasInsurer };
   }
 
   async shareLocation(_caseId: string, _fix: LocationFix): Promise<void> {
     // The real backend would forward this to the police in real time.
   }
 
-  watchProgress(_caseId: string, onChange: (progress: ReportProgress) => void): () => void {
+  watchProgress(caseId: string, onChange: (progress: ReportProgress) => void): () => void {
+    const withClaim = this.casesWithClaim.has(caseId);
+    const emit = (step: ReportProgress) =>
+      onChange(withClaim ? step : { ...step, insuranceClaim: null });
     let step = 0;
-    onChange(DEMO_STEPS[0]);
+    emit(DEMO_STEPS[0]);
     const timer = setInterval(() => {
       step += 1;
-      onChange(DEMO_STEPS[step]);
+      emit(DEMO_STEPS[step]);
       if (step >= DEMO_STEPS.length - 1) clearInterval(timer);
     }, STEP_MS);
     return () => clearInterval(timer);

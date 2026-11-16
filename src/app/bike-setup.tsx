@@ -22,7 +22,8 @@ export default function BikeSetupScreen() {
   const [draft, setDraft] = useState<BikeProfile>(profile);
   const [cameraDenied, setCameraDenied] = useState(false);
 
-  const set = (field: 'make' | 'model' | 'color' | 'frameNumber') => (value: string) =>
+  type TextField = 'make' | 'model' | 'color' | 'frameNumber' | 'insurer' | 'policyNumber';
+  const set = (field: TextField) => (value: string) =>
     setDraft((d) => ({ ...d, [field]: value }));
 
   const pickImage = async (fromCamera: boolean): Promise<string | null> => {
@@ -58,6 +59,8 @@ export default function BikeSetupScreen() {
       model: draft.model.trim(),
       color: draft.color.trim(),
       frameNumber: draft.frameNumber.trim(),
+      insurer: draft.insurer.trim(),
+      policyNumber: draft.policyNumber.trim(),
     });
     leave();
   };
@@ -119,6 +122,24 @@ export default function BikeSetupScreen() {
         ) : (
           <PickButtons s={s.setup} onPick={setReceipt} />
         )}
+      </View>
+
+      <View style={styles.section}>
+        <AppText bold upper size={16}>
+          {s.setup.insuranceTitle}
+        </AppText>
+        <Field
+          label={s.setup.insurer}
+          hint={s.setup.insurerHint}
+          value={draft.insurer}
+          onChangeText={set('insurer')}
+        />
+        <Field
+          label={s.setup.policyNumber}
+          value={draft.policyNumber}
+          onChangeText={set('policyNumber')}
+          autoCapitalize="characters"
+        />
       </View>
 
       {cameraDenied ? <AppText color={colors.warning}>{s.setup.cameraDenied}</AppText> : null}

@@ -46,6 +46,9 @@ export type BikeProfile = {
   /** Local image URIs. */
   photos: string[];
   receiptUri: string | null;
+  /** Insurance company the claim goes to. Empty = no claim is filed. */
+  insurer: string;
+  policyNumber: string;
 };
 
 export const EMPTY_BIKE_PROFILE: BikeProfile = {
@@ -55,6 +58,8 @@ export const EMPTY_BIKE_PROFILE: BikeProfile = {
   frameNumber: '',
   photos: [],
   receiptUri: null,
+  insurer: '',
+  policyNumber: '',
 };
 
 /** How far customer service has got with one of the reports it files. */
@@ -62,7 +67,8 @@ export type ReportStage = 'sent' | 'received' | 'processing' | 'done';
 
 export type ReportProgress = {
   crimeReport: ReportStage;
-  insuranceClaim: ReportStage;
+  /** null when no insurer is saved, so no claim was filed. */
+  insuranceClaim: ReportStage | null;
 };
 
 export type IncidentStatus = 'detected' | 'reporting' | 'police_notified';

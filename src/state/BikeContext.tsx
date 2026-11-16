@@ -12,7 +12,7 @@ import {
 } from 'react';
 
 import { LOW_BATTERY_PERCENT } from '@/domain/movementDetection';
-import type { BikeProfile } from '@/domain/types';
+import { EMPTY_BIKE_PROFILE, type BikeProfile } from '@/domain/types';
 import { useI18n } from '@/i18n/LanguageContext';
 import { createTagSource, supportService, tagSimulator, TAG_SOURCE_IDS, type TagSourceId } from '@/services';
 import {
@@ -82,6 +82,8 @@ export function BikeProvider({ children }: { children: ReactNode }) {
           delete persisted.armed;
           delete persisted.parkedAt;
         }
+        // Fill in fields added in later versions (e.g. insurer) for profiles saved earlier.
+        if (persisted.profile) persisted.profile = { ...EMPTY_BIKE_PROFILE, ...persisted.profile };
         dispatch({ type: 'hydrate', persisted });
       });
   }, []);

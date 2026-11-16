@@ -44,7 +44,9 @@ export default function IncidentScreen() {
       {incident.progress ? (
         <Card title={s.incident.progressTitle}>
           <ProgressRow label={s.incident.crimeReport} stage={incident.progress.crimeReport} />
-          <ProgressRow label={s.incident.insuranceClaim} stage={incident.progress.insuranceClaim} />
+          {incident.progress.insuranceClaim ? (
+            <ProgressRow label={s.incident.insuranceClaim} stage={incident.progress.insuranceClaim} />
+          ) : null}
         </Card>
       ) : null}
 
