@@ -75,6 +75,13 @@ export function BikeProvider({ children }: { children: ReactNode }) {
       .catch((): Partial<PersistedState> => ({}))
       .then((persisted) => {
         if (persisted.tagSource && !TAG_SOURCE_IDS.includes(persisted.tagSource)) delete persisted.tagSource;
+        // The simulated bike always restarts at Maarintie 8, so a remembered parking spot
+        // would be stale and fire a false alarm on launch. Real tags keep it: an alert on
+        // opening the app can then be a genuine theft that happened while it was closed.
+        if ((persisted.tagSource ?? 'simulator') === 'simulator') {
+          delete persisted.armed;
+          delete persisted.parkedAt;
+        }
         dispatch({ type: 'hydrate', persisted });
       });
   }, []);
