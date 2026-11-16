@@ -14,8 +14,12 @@ export const MOVEMENT_THRESHOLD_M = 30;
  */
 export const CONSECUTIVE_READINGS_REQUIRED = 2;
 
-/** Owner this far from the bike turns monitoring on automatically. */
-export const AUTO_ARM_DISTANCE_M = 75;
+/**
+ * Owner this far from the bike turns monitoring on automatically. Short enough to
+ * catch "locked it outside the shop and went in"; GPS error on both devices can
+ * occasionally trigger it while the owner is still close.
+ */
+export const AUTO_ARM_DISTANCE_M = 25;
 
 /** Battery level that triggers a low-battery notification. */
 export const LOW_BATTERY_PERCENT = 20;

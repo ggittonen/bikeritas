@@ -129,7 +129,7 @@ The simulated bike is parked at **Maarintie 8** (TUAS, Otaniemi).
 
 Also in this version, based on user testing:
 - **Low tag battery** sends a notification below 20 %.
-- **Automatic monitoring** (MUUT) turns monitoring on when you walk more than 75 m from the bike.
+- **Automatic monitoring** (MUUT) turns monitoring on when you walk more than 25 m from the bike.
   It works when the tag is another phone, see *Two phones* below.
 - If the connection to the tag is lost, the map shows the **last known location** and its time.
 
