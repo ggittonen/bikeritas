@@ -33,6 +33,8 @@ function App() {
         <Stack.Screen name="alert" options={{ presentation: 'modal' }} />
         <Stack.Screen name="incident" />
         <Stack.Screen name="tag-mode" />
+        <Stack.Screen name="bike-setup" />
+        <Stack.Screen name="confirm-report" />
       </Stack>
     </BikeProvider>
   );

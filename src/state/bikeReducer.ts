@@ -1,11 +1,14 @@
-import { isUnauthorizedMovement } from '@/domain/movementDetection';
-import type {
-  Coordinate,
-  Incident,
-  IncidentEvent,
-  IncidentStatus,
-  LocationFix,
-  TagStatus,
+import { CONSECUTIVE_READINGS_REQUIRED, isUnauthorizedMovement } from '@/domain/movementDetection';
+import {
+  EMPTY_BIKE_PROFILE,
+  type BikeProfile,
+  type Coordinate,
+  type Incident,
+  type IncidentEvent,
+  type IncidentStatus,
+  type LocationFix,
+  type ReportProgress,
+  type TagStatus,
 } from '@/domain/types';
 import type { TagSourceId } from '@/services';
 
@@ -17,12 +20,19 @@ export type PersistedState = {
   armed: boolean;
   parkedAt: Coordinate | null;
   subscriptionActive: boolean;
+  profile: BikeProfile;
+  /** The bike-details step has been completed or skipped. */
+  setupDone: boolean;
+  /** Turn monitoring on when the owner walks away from the bike. */
+  autoArm: boolean;
 };
 
 export type BikeState = PersistedState & {
   hydrated: boolean;
   tag: TagStatus | null;
   incident: Incident | null;
+  /** Readings in a row past the movement threshold (false-alarm filter). */
+  outsideStreak: number;
 };
 
 export type BikeAction =
@@ -32,7 +42,10 @@ export type BikeAction =
   | { type: 'disarm' }
   | { type: 'setSubscription'; active: boolean }
   | { type: 'setTagSource'; source: TagSourceId; remoteBikeId?: string }
+  | { type: 'setProfile'; profile: BikeProfile }
+  | { type: 'setAutoArm'; enabled: boolean }
   | { type: 'incidentProgress'; event: IncidentEvent['kind']; status?: IncidentStatus; supportCaseId?: string }
+  | { type: 'reportProgress'; progress: ReportProgress }
   | { type: 'incidentClosed' };
 
 export const initialBikeState: BikeState = {
@@ -43,7 +56,11 @@ export const initialBikeState: BikeState = {
   armed: false,
   parkedAt: null,
   subscriptionActive: false,
+  profile: EMPTY_BIKE_PROFILE,
+  setupDone: false,
+  autoArm: true,
   incident: null,
+  outsideStreak: 0,
 };
 
 function newIncident(parkedAt: Coordinate, fix: LocationFix): Incident {
@@ -63,24 +80,28 @@ export function bikeReducer(state: BikeState, action: BikeAction): BikeState {
 
     case 'tagUpdate': {
       const fix = action.status.lastFix;
-      // Status-only updates (battery, connection) repeat the old fix; don't add it to the route twice.
+      // Status-only updates (battery, connection) repeat the old fix; don't count them twice.
       const isNewFix = fix?.timestamp !== state.tag?.lastFix?.timestamp;
-      let incident = state.incident;
+      let { incident, outsideStreak } = state;
       if (fix && isNewFix) {
         if (incident) {
           incident = { ...incident, path: [...incident.path, fix] };
-        } else if (state.armed && state.parkedAt && isUnauthorizedMovement(state.parkedAt, fix)) {
-          incident = newIncident(state.parkedAt, fix);
+        } else if (state.armed && state.parkedAt) {
+          outsideStreak = isUnauthorizedMovement(state.parkedAt, fix) ? outsideStreak + 1 : 0;
+          if (outsideStreak >= CONSECUTIVE_READINGS_REQUIRED) {
+            incident = newIncident(state.parkedAt, fix);
+            outsideStreak = 0;
+          }
         }
       }
-      return { ...state, tag: action.status, incident };
+      return { ...state, tag: action.status, incident, outsideStreak };
     }
 
     case 'arm':
-      return { ...state, armed: true, parkedAt: action.at };
+      return { ...state, armed: true, parkedAt: action.at, outsideStreak: 0 };
 
     case 'disarm':
-      return { ...state, armed: false, parkedAt: null };
+      return { ...state, armed: false, parkedAt: null, outsideStreak: 0 };
 
     case 'setSubscription':
       return { ...state, subscriptionActive: action.active };
@@ -95,7 +116,14 @@ export function bikeReducer(state: BikeState, action: BikeAction): BikeState {
         armed: false,
         parkedAt: null,
         incident: null,
+        outsideStreak: 0,
       };
+
+    case 'setProfile':
+      return { ...state, profile: action.profile, setupDone: true };
+
+    case 'setAutoArm':
+      return { ...state, autoArm: action.enabled };
 
     case 'incidentProgress': {
       if (!state.incident) return state;
@@ -111,7 +139,11 @@ export function bikeReducer(state: BikeState, action: BikeAction): BikeState {
       };
     }
 
+    case 'reportProgress':
+      if (!state.incident) return state;
+      return { ...state, incident: { ...state.incident, progress: action.progress } };
+
     case 'incidentClosed':
-      return { ...state, incident: null, armed: false, parkedAt: null };
+      return { ...state, incident: null, armed: false, parkedAt: null, outsideStreak: 0 };
   }
 }

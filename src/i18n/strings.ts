@@ -1,4 +1,4 @@
-import type { IncidentEvent, IncidentStatus, TagProblem } from '@/domain/types';
+import type { IncidentEvent, IncidentStatus, ReportStage, TagProblem } from '@/domain/types';
 import type { TagSourceId } from '@/services';
 
 export type Language = 'fi' | 'en';
@@ -17,6 +17,9 @@ export const fi = {
     parked: 'Pysäköity',
     bike: 'Pyörä',
     myBike: 'Oma pyörä',
+    lastKnown: (time: string) => `Viimeisin tunnettu sijainti ${time}`,
+    yes: 'Kyllä',
+    no: 'Ei',
   },
 
   monitoring: {
@@ -45,14 +48,65 @@ export const fi = {
     simulateTheft: 'Simuloi varkaus',
     stopBike: 'Pysäytä pyörä',
     moving: 'Pyörä liikkuu…',
-    willAlert: 'Hälytys tulee, kun pyörä on yli rajan päässä (noin 10 s).',
+    willAlert: 'Hälytys tulee, kun pyörä on yli rajan päässä (noin 15 s).',
     armFirst: 'Aktivoi valvonta ensin, muuten varkaus ei hälytä.',
+    ownerDistance: (meters: number) => `Olet ${meters} m päässä pyörästä`,
+  },
+
+  setup: {
+    title: 'Pyörän tiedot',
+    intro:
+      'Tallenna pyörän tiedot nyt. Varkauden sattuessa ne liitetään ilmoitukseen automaattisesti, eikä niitä tarvitse muistaa stressaavassa tilanteessa.',
+    make: 'Merkki',
+    model: 'Malli',
+    color: 'Väri',
+    frameNumber: 'Runkonumero',
+    frameHint: 'Löytyy yleensä polkimien välistä rungon alta.',
+    photos: 'Kuvat pyörästä',
+    receipt: 'Ostokuitti',
+    addPhoto: 'Valitse kuva',
+    takePhoto: 'Ota kuva',
+    remove: 'Poista',
+    save: 'Tallenna',
+    skip: 'Ohita nyt',
+    cameraDenied: 'Kameralupa puuttuu. Salli kamera puhelimen asetuksista.',
+  },
+
+  confirm: {
+    title: 'Vahvista varkaus',
+    intro: 'Kun vahvistat, seuraavat tiedot luovutetaan eteenpäin. Mitään ei lähetetä ennen vahvistusta.',
+    sharedTitle: 'Luovutettavat tiedot',
+    location: 'Pyörän sijainti ja reitti, reaaliajassa kunnes pyörä löytyy',
+    bikeDetails: 'Pyörän tiedot',
+    photos: (n: number) => `Kuvat pyörästä: ${n} kpl`,
+    receipt: 'Ostokuitti',
+    recipientsTitle: 'Vastaanottajat',
+    recipients: ['Bikeritas-asiakaspalvelu', 'Poliisi (rikosilmoitus)', 'Vakuutusyhtiösi (vakuutusilmoitus)'],
+    missingDetails: 'Pyörän tietoja ei ole tallennettu. Ilmoitus onnistuu, mutta tiedot nopeuttavat käsittelyä.',
+    addDetails: 'Lisää tiedot',
+    confirm: 'Vahvista ja ilmoita',
+    cancel: 'Peruuta',
+    selfTitle: 'Tee rikosilmoitus itse',
+    selfBody:
+      'Ilman Bikeritas Turvaa voit seurata pyörää, mutta rikosilmoitus tehdään itse. Avaa poliisin sähköinen asiointi ja käytä alla olevia tietoja.',
+    openPoliceForm: 'Avaa poliisin rikosilmoitus',
+    policeUrl: 'https://poliisi.fi/tee-rikosilmoitus',
+    upsell: 'Bikeritas Turva -tilauksella asiakaspalvelu hoitaa ilmoitukset puolestasi.',
+    getSubscription: 'Katso Bikeritas Turva',
   },
 
   more: {
     subscriptionTitle: 'Bikeritas Turva',
     subscriptionBody:
       'Kuukausitilaus aktivoi asiakaspalvelun: varkaustilanteessa se ilmoittaa poliisille, tekee rikos- ja vakuutusilmoituksen puolestasi ja välittää pyörän reaaliaikaisen sijainnin viranomaisille.',
+    tierFree: 'Tägi + sovellus (kertamaksu): seuranta ja hälytykset. Rikosilmoitus tehdään itse.',
+    tierPaid: 'Bikeritas Turva (kuukausimaksu): asiakaspalvelu hoitaa ilmoitukset ja auttaa pyörän takaisinsaannissa.',
+    bikeDetailsTitle: 'Pyörän tiedot',
+    bikeDetailsEmpty: 'Ei tallennettu',
+    editDetails: 'Muokkaa tietoja',
+    autoArmTitle: 'Automaattinen valvonta',
+    autoArmBody: (meters: number) => `Valvonta menee päälle, kun olet yli ${meters} m päässä pyörästä.`,
+    autoArmUnavailable: 'Toimii, kun tägi on toisessa laitteessa (Pyörän tägi -lähde).',
     subscriptionActive: 'Tilaus aktiivinen',
     noSubscription: 'Ei tilausta',
     subscriptionNote: 'Prototyyppi: maksua ei veloiteta, kytkin vain simuloi tilausta.',
@@ -102,6 +156,15 @@ export const fi = {
     caseNumber: 'Tapausnumero',
     events: 'Tapahtumat',
     recovered: 'Pyörä saatu takaisin',
+    progressTitle: 'Ilmoitusten käsittely',
+    crimeReport: 'Rikosilmoitus',
+    insuranceClaim: 'Vakuutusilmoitus',
+    stages: {
+      sent: 'Lähetetty',
+      received: 'Vastaanotettu',
+      processing: 'Käsittelyssä',
+      done: 'Käsitelty',
+    } satisfies Record<ReportStage, string>,
     event: (e: IncidentEvent): string => {
       switch (e.kind) {
         case 'detected':
@@ -118,6 +181,8 @@ export const fi = {
           return 'Reaaliaikainen sijainti jaetaan viranomaisille';
         case 'report_failed':
           return 'Ilmoitus epäonnistui – yritä uudelleen';
+        case 'self_report_opened':
+          return 'Poliisin rikosilmoitussivu avattu';
       }
     },
   },
@@ -162,6 +227,11 @@ export const fi = {
     title: 'Pyöräsi liikkuu!',
     body: 'Havaitsimme luvattoman liikkeen. Avaa sovellus ja valitse mitä tehdään.',
   },
+
+  lowBatteryNotification: {
+    title: 'Tägin akku vähissä',
+    body: (percent: number) => `Akkua jäljellä ${percent} %. Lataa tägi, jotta pyörä pysyy valvottuna.`,
+  },
 };
 
 export type Strings = typeof fi;
@@ -180,6 +250,9 @@ export const en: Strings = {
     parked: 'Parked',
     bike: 'Bike',
     myBike: 'My bike',
+    lastKnown: (time: string) => `Last known location ${time}`,
+    yes: 'Yes',
+    no: 'No',
   },
 
   monitoring: {
@@ -208,14 +281,65 @@ export const en: Strings = {
     simulateTheft: 'Simulate theft',
     stopBike: 'Stop the bike',
     moving: 'Bike is moving…',
-    willAlert: 'The alert comes when the bike is past the limit (about 10 s).',
+    willAlert: 'The alert comes when the bike is past the limit (about 15 s).',
     armFirst: 'Turn on monitoring first, otherwise the theft won’t trigger an alert.',
+    ownerDistance: (meters: number) => `You are ${meters} m from the bike`,
+  },
+
+  setup: {
+    title: 'Bike details',
+    intro:
+      'Save your bike’s details now. If it’s stolen, they’re attached to the report automatically, so you don’t have to remember them in a stressful moment.',
+    make: 'Make',
+    model: 'Model',
+    color: 'Colour',
+    frameNumber: 'Frame number',
+    frameHint: 'Usually under the frame between the pedals.',
+    photos: 'Photos of the bike',
+    receipt: 'Purchase receipt',
+    addPhoto: 'Choose photo',
+    takePhoto: 'Take photo',
+    remove: 'Remove',
+    save: 'Save',
+    skip: 'Skip for now',
+    cameraDenied: 'Camera permission missing. Allow the camera in your phone’s settings.',
+  },
+
+  confirm: {
+    title: 'Confirm theft',
+    intro: 'When you confirm, the following information is passed on. Nothing is sent before you confirm.',
+    sharedTitle: 'Information shared',
+    location: 'The bike’s location and route, live until the bike is found',
+    bikeDetails: 'Bike details',
+    photos: (n: number) => `Photos of the bike: ${n}`,
+    receipt: 'Purchase receipt',
+    recipientsTitle: 'Recipients',
+    recipients: ['Bikeritas customer service', 'Police (crime report)', 'Your insurer (insurance claim)'],
+    missingDetails: 'No bike details saved. Reporting still works, but details speed up the process.',
+    addDetails: 'Add details',
+    confirm: 'Confirm and report',
+    cancel: 'Cancel',
+    selfTitle: 'File a police report yourself',
+    selfBody:
+      'Without Bikeritas Turva you can track the bike, but you file the crime report yourself. Open the police online service and use the details below.',
+    openPoliceForm: 'Open police report form',
+    policeUrl: 'https://poliisi.fi/en/report-a-crime',
+    upsell: 'With the Bikeritas Turva subscription, customer service files the reports for you.',
+    getSubscription: 'See Bikeritas Turva',
   },
 
   more: {
     subscriptionTitle: 'Bikeritas Turva',
     subscriptionBody:
       'The monthly subscription activates customer service: in a theft it notifies the police, files the crime report and insurance claim for you, and shares the bike’s live location with the authorities.',
+    tierFree: 'Tag + app (one-time payment): tracking and alerts. You file the crime report yourself.',
+    tierPaid: 'Bikeritas Turva (monthly): customer service files the reports and helps get the bike back.',
+    bikeDetailsTitle: 'Bike details',
+    bikeDetailsEmpty: 'Not saved',
+    editDetails: 'Edit details',
+    autoArmTitle: 'Automatic monitoring',
+    autoArmBody: (meters: number) => `Monitoring turns on when you are more than ${meters} m from the bike.`,
+    autoArmUnavailable: 'Works when the tag is another device (Bike’s tag source).',
     subscriptionActive: 'Subscription active',
     noSubscription: 'No subscription',
     subscriptionNote: 'Prototype: nothing is charged, the switch only simulates the subscription.',
@@ -265,6 +389,15 @@ export const en: Strings = {
     caseNumber: 'Case number',
     events: 'Events',
     recovered: 'Bike recovered',
+    progressTitle: 'Report progress',
+    crimeReport: 'Crime report',
+    insuranceClaim: 'Insurance claim',
+    stages: {
+      sent: 'Sent',
+      received: 'Received',
+      processing: 'In progress',
+      done: 'Handled',
+    },
     event: (e: IncidentEvent): string => {
       switch (e.kind) {
         case 'detected':
@@ -281,6 +414,8 @@ export const en: Strings = {
           return 'Live location shared with the authorities';
         case 'report_failed':
           return 'Reporting failed – try again';
+        case 'self_report_opened':
+          return 'Police report page opened';
       }
     },
   },
@@ -324,6 +459,11 @@ export const en: Strings = {
   notification: {
     title: 'Your bike is moving!',
     body: 'We detected unauthorized movement. Open the app and choose what to do.',
+  },
+
+  lowBatteryNotification: {
+    title: 'Tag battery low',
+    body: (percent: number) => `${percent} % left. Charge the tag to keep your bike monitored.`,
   },
 };
 

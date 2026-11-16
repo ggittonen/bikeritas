@@ -28,15 +28,14 @@ export async function requestNotificationPermission(): Promise<boolean> {
   return granted;
 }
 
-/** `title` and `body` come from the UI so they're in the user's language. */
-export async function notifyUnauthorizedMovement(title: string, body: string) {
+/**
+ * Shows a notification right away. `title` and `body` come from the UI so
+ * they're in the user's language; `route` opens when the notification is tapped.
+ */
+export async function notify(title: string, body: string, route?: string) {
   if (!supported) return;
   await Notifications.scheduleNotificationAsync({
-    content: {
-      title,
-      body,
-      data: { route: '/alert' },
-    },
+    content: { title, body, data: route ? { route } : {} },
     trigger: null,
   });
 }

@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'reac
 import { AppText } from '@/components/AppText';
 import { BigButton } from '@/components/BigButton';
 import { Card } from '@/components/Card';
+import { AUTO_ARM_DISTANCE_M } from '@/domain/movementDetection';
 import { useI18n } from '@/i18n/LanguageContext';
 import { strings, type Language } from '@/i18n/strings';
 import { TAG_SOURCE_IDS, type TagSourceId } from '@/services';
@@ -18,7 +19,18 @@ const LANGUAGES: Language[] = ['fi', 'en'];
 /** More tab: language, subscription, where the location comes from, and tag mode. */
 export default function MoreScreen() {
   const { s, language, setLanguage } = useI18n();
-  const { tagSource, remoteBikeId, setTagSource, subscriptionActive, setSubscription } = useBike();
+  const {
+    tagSource,
+    remoteBikeId,
+    setTagSource,
+    subscriptionActive,
+    setSubscription,
+    profile,
+    autoArm,
+    setAutoArm,
+    autoArmAvailable,
+  } = useBike();
+  const bikeSummary = [profile.make, profile.model, profile.color].filter(Boolean).join(' · ');
   const [showCodeInput, setShowCodeInput] = useState(false);
 
   const onSelectSource = (id: TagSourceId) => {
@@ -45,6 +57,10 @@ export default function MoreScreen() {
         <AppText size={14} style={styles.body}>
           {s.more.subscriptionBody}
         </AppText>
+        <AppText size={13} color={colors.muted} style={styles.body}>
+          • {s.more.tierFree}
+          {'\n'}• {s.more.tierPaid}
+        </AppText>
         <View style={styles.switchRow}>
           <AppText upper bold color={subscriptionActive ? colors.success : colors.muted}>
             {subscriptionActive ? s.more.subscriptionActive : s.more.noSubscription}
@@ -58,6 +74,34 @@ export default function MoreScreen() {
         <AppText size={12} color={colors.muted}>
           {s.more.subscriptionNote}
         </AppText>
+      </Card>
+
+      <Card title={s.more.bikeDetailsTitle}>
+        <AppText size={14}>{bikeSummary || s.more.bikeDetailsEmpty}</AppText>
+        {profile.frameNumber ? (
+          <AppText size={13} color={colors.muted}>
+            {s.setup.frameNumber}: {profile.frameNumber}
+          </AppText>
+        ) : null}
+        <BigButton title={s.more.editDetails} variant="secondary" onPress={() => router.push('/bike-setup')} />
+      </Card>
+
+      <Card title={s.more.autoArmTitle}>
+        <View style={styles.switchRow}>
+          <AppText size={14} style={[styles.body, styles.flex]}>
+            {s.more.autoArmBody(AUTO_ARM_DISTANCE_M)}
+          </AppText>
+          <Switch
+            value={autoArm}
+            onValueChange={setAutoArm}
+            trackColor={{ true: colors.success, false: colors.divider }}
+          />
+        </View>
+        {autoArmAvailable ? null : (
+          <AppText size={12} color={colors.muted}>
+            {s.more.autoArmUnavailable}
+          </AppText>
+        )}
       </Card>
 
       <Card title={s.more.sourceTitle}>

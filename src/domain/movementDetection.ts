@@ -7,6 +7,19 @@ import type { Coordinate } from './types';
  */
 export const MOVEMENT_THRESHOLD_M = 30;
 
+/**
+ * Readings in a row that must be past the threshold before alerting. A single
+ * GPS jump then can't cause a false alarm (a tester worry), at the cost of a
+ * few seconds' delay.
+ */
+export const CONSECUTIVE_READINGS_REQUIRED = 2;
+
+/** Owner this far from the bike turns monitoring on automatically. */
+export const AUTO_ARM_DISTANCE_M = 75;
+
+/** Battery level that triggers a low-battery notification. */
+export const LOW_BATTERY_PERCENT = 20;
+
 export function isUnauthorizedMovement(parkedAt: Coordinate, current: Coordinate): boolean {
   return distanceMeters(parkedAt, current) > MOVEMENT_THRESHOLD_M;
 }

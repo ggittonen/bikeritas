@@ -5,19 +5,17 @@ import { BigButton } from '@/components/BigButton';
 import { Card, Row } from '@/components/Card';
 import { BikeIcon } from '@/components/icons';
 import { distanceMeters } from '@/domain/geo';
-import { MOVEMENT_THRESHOLD_M } from '@/domain/movementDetection';
+import { LOW_BATTERY_PERCENT, MOVEMENT_THRESHOLD_M } from '@/domain/movementDetection';
 import { formatPercent, formatTime } from '@/format';
 import { useI18n } from '@/i18n/LanguageContext';
 import { tagSimulator } from '@/services';
 import { useBike } from '@/state/BikeContext';
 import { colors, spacing } from '@/theme';
 
-const LOW_BATTERY_PERCENT = 20;
-
 /** Bikes tab: the bike, its tag and turning monitoring on/off. */
 export default function BikesScreen() {
   const { s } = useI18n();
-  const { tag, tagSource, armed, parkedAt, incident, arm, disarm } = useBike();
+  const { tag, tagSource, armed, parkedAt, incident, arm, disarm, ownerDistance } = useBike();
   const fix = tag?.lastFix ?? null;
   const battery = tag?.batteryPercent ?? null;
   const lowBattery = battery !== null && battery < LOW_BATTERY_PERCENT;
@@ -47,6 +45,11 @@ export default function BikesScreen() {
           <AppText color={colors.muted} size={13} style={styles.center}>
             {s.monitoring.hint(MOVEMENT_THRESHOLD_M)}
           </AppText>
+          {ownerDistance !== null ? (
+            <AppText size={13} style={styles.center}>
+              {s.bikes.ownerDistance(Math.round(ownerDistance))}
+            </AppText>
+          ) : null}
         </>
       )}
 

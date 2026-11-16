@@ -11,15 +11,18 @@ import {
   type ReactNode,
 } from 'react';
 
+import { LOW_BATTERY_PERCENT } from '@/domain/movementDetection';
+import type { BikeProfile } from '@/domain/types';
+import { useI18n } from '@/i18n/LanguageContext';
 import { createTagSource, supportService, tagSimulator, TAG_SOURCE_IDS, type TagSourceId } from '@/services';
 import {
   configureNotifications,
-  notifyUnauthorizedMovement,
+  notify,
   onNotificationOpened,
   requestNotificationPermission,
 } from '@/services/notifications';
-import { useI18n } from '@/i18n/LanguageContext';
 import { bikeReducer, initialBikeState, type BikeState, type PersistedState } from './bikeReducer';
+import { useAutoArm } from './useAutoArm';
 
 const STORAGE_KEY = 'bikeritas/state/v1';
 
@@ -31,8 +34,20 @@ type BikeContextValue = BikeState & {
   setSubscription: (active: boolean) => void;
   /** For 'remote', pass the pairing code of the tag to follow. */
   setTagSource: (source: TagSourceId, remoteBikeId?: string) => void;
-  /** Hands the theft over to customer service (police, crime report, insurance). */
+  /** Saves the bike's details and marks the setup step done. */
+  setProfile: (profile: BikeProfile) => void;
+  setAutoArm: (enabled: boolean) => void;
+  /** Owner's distance to the bike when auto-monitoring is active, else null. */
+  ownerDistance: number | null;
+  /** True when auto-monitoring can work (the tag is another device). */
+  autoArmAvailable: boolean;
+  /**
+   * Hands the theft over to customer service (police, crime report, insurance).
+   * Call only after the owner has confirmed what will be shared.
+   */
   reportTheft: () => Promise<ReportResult>;
+  /** Without a subscription: records that the owner went to file the report themselves. */
+  logSelfReport: () => void;
   /** "It was me" – closes the incident and turns off monitoring. */
   dismissIncident: () => void;
   markRecovered: () => void;
@@ -43,10 +58,10 @@ const BikeContext = createContext<BikeContextValue | null>(null);
 export function BikeProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(bikeReducer, initialBikeState);
   const { s } = useI18n();
-  // Read through a ref so a language change doesn't re-run the new-incident effect.
-  const notificationTextRef = useRef(s.notification);
+  // Read through refs so a language change doesn't re-run the effects below.
+  const textRef = useRef(s);
   useEffect(() => {
-    notificationTextRef.current = s.notification;
+    textRef.current = s;
   });
   const stateRef = useRef(state);
   useEffect(() => {
@@ -78,42 +93,79 @@ export function BikeProvider({ children }: { children: ReactNode }) {
   }, [hydrated, tagSource, remoteBikeId]);
 
   // Persist the parts that should survive a restart.
-  const { armed, parkedAt, subscriptionActive } = state;
+  const { armed, parkedAt, subscriptionActive, profile, setupDone, autoArm } = state;
   useEffect(() => {
     if (!hydrated) return;
-    const persisted: PersistedState = { tagSource, remoteBikeId, armed, parkedAt, subscriptionActive };
+    const persisted: PersistedState = {
+      tagSource,
+      remoteBikeId,
+      armed,
+      parkedAt,
+      subscriptionActive,
+      profile,
+      setupDone,
+      autoArm,
+    };
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(persisted)).catch(() => {});
-  }, [hydrated, tagSource, remoteBikeId, armed, parkedAt, subscriptionActive]);
+  }, [hydrated, tagSource, remoteBikeId, armed, parkedAt, subscriptionActive, profile, setupDone, autoArm]);
 
-  // Notifications: set up once, open the alert screen when one is tapped.
+  // Notifications: set up once, open the right screen when one is tapped.
   useEffect(() => {
     configureNotifications();
     requestNotificationPermission();
     return onNotificationOpened((route) => {
       if (route === '/alert') router.push('/alert');
+      if (route === '/bikes') router.navigate('/bikes');
     });
   }, []);
 
-  // A new incident: push notification + jump straight to the alert screen.
+  // A new incident: notification + jump straight to the alert screen.
   const incidentId = state.incident?.id;
   useEffect(() => {
     if (!incidentId) return;
-    const { title, body } = notificationTextRef.current;
-    notifyUnauthorizedMovement(title, body);
+    const { title, body } = textRef.current.notification;
+    notify(title, body, '/alert');
     router.push('/alert');
   }, [incidentId]);
 
-  // Once customer service has the case, stream the live location to it.
+  // Low tag battery: notify once when it drops below the limit; re-arm after charging.
+  const battery = state.tag?.batteryPercent ?? null;
+  const lowBatteryNotified = useRef(false);
+  useEffect(() => {
+    if (battery === null) return;
+    if (battery < LOW_BATTERY_PERCENT && !lowBatteryNotified.current) {
+      lowBatteryNotified.current = true;
+      const { title, body } = textRef.current.lowBatteryNotification;
+      notify(title, body(Math.round(battery)), '/bikes');
+    } else if (battery >= LOW_BATTERY_PERCENT + 5) {
+      lowBatteryNotified.current = false;
+    }
+  }, [battery]);
+
+  // Once customer service has the case: stream the live location and follow report progress.
   const caseId = state.incident?.supportCaseId;
   const lastFix = state.tag?.lastFix;
   useEffect(() => {
     if (caseId && lastFix) supportService.shareLocation(caseId, lastFix).catch(() => {});
   }, [caseId, lastFix]);
+  useEffect(() => {
+    if (!caseId) return;
+    return supportService.watchProgress(caseId, (progress) => dispatch({ type: 'reportProgress', progress }));
+  }, [caseId]);
 
   const arm = useCallback(() => {
     const fix = stateRef.current.tag?.lastFix;
     if (fix) dispatch({ type: 'arm', at: { latitude: fix.latitude, longitude: fix.longitude } });
   }, []);
+
+  // Auto-monitoring only makes sense when the tag is a different device from this phone.
+  const autoArmAvailable = tagSource === 'remote';
+  const ownerDistance = useAutoArm({
+    enabled: autoArm && autoArmAvailable && !state.incident,
+    bike: lastFix ?? null,
+    armed,
+    onArm: arm,
+  });
 
   const disarm = useCallback(() => dispatch({ type: 'disarm' }), []);
 
@@ -127,8 +179,11 @@ export function BikeProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'setTagSource', source, remoteBikeId });
   }, []);
 
+  const setProfile = useCallback((next: BikeProfile) => dispatch({ type: 'setProfile', profile: next }), []);
+  const setAutoArm = useCallback((enabled: boolean) => dispatch({ type: 'setAutoArm', enabled }), []);
+
   const reportTheft = useCallback(async (): Promise<ReportResult> => {
-    const { incident, subscriptionActive, tag } = stateRef.current;
+    const { incident, subscriptionActive, tag, profile } = stateRef.current;
     if (!incident) return 'no_incident';
     if (incident.status !== 'detected') return 'already_reported';
     if (!subscriptionActive) return 'no_subscription';
@@ -138,9 +193,9 @@ export function BikeProvider({ children }: { children: ReactNode }) {
       const supportCase = await supportService.reportTheft({
         incidentId: incident.id,
         tagId: tag?.id ?? 'unknown',
-        bikeName: tag?.name ?? 'Pyörä',
         startedAt: incident.startedAt,
         path: incident.path,
+        profile,
       });
       dispatch({
         type: 'incidentProgress',
@@ -148,12 +203,8 @@ export function BikeProvider({ children }: { children: ReactNode }) {
         supportCaseId: supportCase.caseId,
         event: 'police_notified',
       });
-      if (supportCase.crimeReportFiled) {
-        dispatch({ type: 'incidentProgress', event: 'crime_report' });
-      }
-      if (supportCase.insuranceClaimFiled) {
-        dispatch({ type: 'incidentProgress', event: 'insurance_claim' });
-      }
+      if (supportCase.crimeReportFiled) dispatch({ type: 'incidentProgress', event: 'crime_report' });
+      if (supportCase.insuranceClaimFiled) dispatch({ type: 'incidentProgress', event: 'insurance_claim' });
       dispatch({ type: 'incidentProgress', event: 'sharing_location' });
       return 'ok';
     } catch {
@@ -161,6 +212,8 @@ export function BikeProvider({ children }: { children: ReactNode }) {
       return 'failed';
     }
   }, []);
+
+  const logSelfReport = useCallback(() => dispatch({ type: 'incidentProgress', event: 'self_report_opened' }), []);
 
   const closeIncident = useCallback(() => {
     tagSimulator.stopMovement(); // no-op unless the simulator is riding away
@@ -176,11 +229,30 @@ export function BikeProvider({ children }: { children: ReactNode }) {
       disarm,
       setSubscription,
       setTagSource,
+      setProfile,
+      setAutoArm,
+      ownerDistance,
+      autoArmAvailable,
       reportTheft,
+      logSelfReport,
       dismissIncident,
       markRecovered,
     }),
-    [state, arm, disarm, setSubscription, setTagSource, reportTheft, dismissIncident, markRecovered],
+    [
+      state,
+      arm,
+      disarm,
+      setSubscription,
+      setTagSource,
+      setProfile,
+      setAutoArm,
+      ownerDistance,
+      autoArmAvailable,
+      reportTheft,
+      logSelfReport,
+      dismissIncident,
+      markRecovered,
+    ],
   );
 
   return <BikeContext.Provider value={value}>{children}</BikeContext.Provider>;

@@ -34,6 +34,37 @@ export type TagProblem = {
   accuracyM?: number;
 };
 
+/**
+ * Identifying details saved at setup, so they don't have to be remembered in
+ * the middle of a theft. Attached to the report automatically.
+ */
+export type BikeProfile = {
+  make: string;
+  model: string;
+  color: string;
+  frameNumber: string;
+  /** Local image URIs. */
+  photos: string[];
+  receiptUri: string | null;
+};
+
+export const EMPTY_BIKE_PROFILE: BikeProfile = {
+  make: '',
+  model: '',
+  color: '',
+  frameNumber: '',
+  photos: [],
+  receiptUri: null,
+};
+
+/** How far customer service has got with one of the reports it files. */
+export type ReportStage = 'sent' | 'received' | 'processing' | 'done';
+
+export type ReportProgress = {
+  crimeReport: ReportStage;
+  insuranceClaim: ReportStage;
+};
+
 export type IncidentStatus = 'detected' | 'reporting' | 'police_notified';
 
 /** Timeline entry. Stored as a kind (not text) so it can be shown in any language. */
@@ -46,7 +77,8 @@ export type IncidentEvent = {
     | 'crime_report'
     | 'insurance_claim'
     | 'sharing_location'
-    | 'report_failed';
+    | 'report_failed'
+    | 'self_report_opened';
   caseId?: string;
 };
 
@@ -58,4 +90,6 @@ export type Incident = {
   path: Coordinate[];
   timeline: IncidentEvent[];
   supportCaseId?: string;
+  /** Set once customer service has the case. */
+  progress?: ReportProgress;
 };

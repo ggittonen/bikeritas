@@ -1,5 +1,4 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
@@ -12,10 +11,7 @@ import { colors, spacing } from '@/theme';
 /** Shown the moment unauthorized movement is detected: two big, obvious choices. */
 export default function AlertScreen() {
   const { s } = useI18n();
-  const { incident, tag, reportTheft, dismissIncident } = useBike();
-  const [reporting, setReporting] = useState(false);
-  // Shown inline rather than with Alert.alert, which does nothing on web.
-  const [message, setMessage] = useState<'needSubscription' | 'failed' | null>(null);
+  const { incident, tag, dismissIncident } = useBike();
 
   if (!incident) {
     return (
@@ -25,22 +21,6 @@ export default function AlertScreen() {
       </View>
     );
   }
-
-  const onSuspectTheft = async () => {
-    setMessage(null);
-    setReporting(true);
-    const result = await reportTheft();
-    setReporting(false);
-    if (result === 'no_subscription') {
-      setMessage('needSubscription');
-      return;
-    }
-    if (result === 'failed') {
-      setMessage('failed');
-      return;
-    }
-    router.replace('/incident');
-  };
 
   const onNoWorries = () => {
     dismissIncident();
@@ -72,18 +52,12 @@ export default function AlertScreen() {
         <BigButton title={s.alert.noWorries} onPress={onNoWorries} style={styles.choice} />
         <BigButton
           title={reported ? s.alert.reported : s.alert.suspectTheft}
-          onPress={onSuspectTheft}
-          loading={reporting}
+          // Nothing is sent yet: the next screen shows what would be shared and asks to confirm.
+          onPress={() => router.push('/confirm-report')}
           disabled={reported}
           style={styles.choice}
         />
       </View>
-
-      {message ? (
-        <AppText color={colors.warning} style={styles.centerText}>
-          {s.alert[message]}
-        </AppText>
-      ) : null}
     </ScrollView>
   );
 }

@@ -1,12 +1,18 @@
+import { Redirect } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
 
 import { brandHeaderOptions } from '@/components/BrandHeader';
 import { BikeIcon, MenuIcon, PinIcon } from '@/components/icons';
 import { useI18n } from '@/i18n/LanguageContext';
+import { useBike } from '@/state/BikeContext';
 import { colors, fonts } from '@/theme';
 
 export default function TabsLayout() {
   const { s } = useI18n();
+  const { hydrated, setupDone } = useBike();
+  // First launch (after the language choice): ask for the bike's details once.
+  if (hydrated && !setupDone) return <Redirect href="/bike-setup" />;
+
   return (
     <Tabs
       screenOptions={{
