@@ -105,15 +105,33 @@ code and the HUOMIO! screen appears in the browser when the bike moves.
 
 ## Try a theft scenario
 
-1. **PYÖRÄT** (Bikes) → *Aktivoi valvonta* (Turn on monitoring). Your current location is saved as
-   the parking spot.
-2. **Testaustila** (Test mode) → *Simuloi varkaus* (Simulate theft). In about 10 seconds the bike is
-   more than 30 m away and the **HUOMIO!** (Alert!) screen opens.
-3. Choose *Ei huolta* (No worries), *Epäilen varkautta* (I suspect theft) or *Avaa kartta* (Open map).
-4. *Epäilen varkautta* requires the **Bikeritas Turva** subscription. Turn it on in the **MUUT**
-   (More) tab. It's simulated, so nothing is charged.
-5. The tracking screen shows the route and a timeline of events. Finish with *Pyörä saatu takaisin*
-   (Bike recovered).
+On first launch the app asks for the language, then for the **bike's details** (make, model,
+colour, frame number, photos, receipt). You can skip that and fill it in later under **MUUT** (More).
+
+The simulated bike is parked at **Maarintie 8** (TUAS, Otaniemi).
+
+1. Tap the monitoring bar at the bottom of the **SIJAINTI** (Location) map, or go to **PYÖRÄT**
+   (Bikes) → *Aktivoi valvonta* (Turn on monitoring).
+2. **PYÖRÄT** → **Testaustila** (Test mode) → *Simuloi varkaus* (Simulate theft). The bike rides off
+   along one of three real routes: to the Aalto University metro station, Teekkarikylä or
+   Keilaniemi, following streets and bike paths. After about 15 seconds (two readings in a row
+   past 30 m) the **HUOMIO!** (Alert!) screen opens.
+3. Choose *Ei huolta* (No worries), *Avaa kartta* (Open map) or *Epäilen varkautta* (I suspect theft).
+4. *Epäilen varkautta* opens a **confirmation screen**. Nothing is sent until you confirm:
+   - **With Bikeritas Turva** (turn it on in **MUUT**; it's simulated, nothing is charged): the
+     screen lists what is shared (live location, bike details, photos, receipt) and with whom
+     (customer service, the police, your insurer). Then *Vahvista ja ilmoita* (Confirm and report).
+   - **Without it:** the screen opens the police's online crime report and shows your saved bike
+     details to copy.
+5. The tracking screen shows the route, the **progress of the crime report and insurance claim**
+   (sent → received → in progress → handled) and a timeline. Finish with *Pyörä saatu takaisin*
+   (Bike recovered); the simulated bike returns to Maarintie 8.
+
+Also in this version, based on user testing:
+- **Low tag battery** sends a notification below 20 %.
+- **Automatic monitoring** (MUUT) turns monitoring on when you walk more than 75 m from the bike.
+  It works when the tag is another phone, see *Two phones* below.
+- If the connection to the tag is lost, the map shows the **last known location** and its time.
 
 ### Using your phone's real location
 

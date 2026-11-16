@@ -16,4 +16,6 @@ export interface TagService {
 export interface TagSimulator {
   simulateTheft(): void;
   stopMovement(): void;
+  /** Back to the parking spot (Maarintie 8), ready for the next demo. */
+  reset(): void;
 }

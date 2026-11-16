@@ -175,7 +175,7 @@ export function BikeProvider({ children }: { children: ReactNode }) {
   );
 
   const setTagSource = useCallback((source: TagSourceId, remoteBikeId?: string) => {
-    tagSimulator.stopMovement();
+    tagSimulator.reset();
     dispatch({ type: 'setTagSource', source, remoteBikeId });
   }, []);
 
@@ -216,7 +216,7 @@ export function BikeProvider({ children }: { children: ReactNode }) {
   const logSelfReport = useCallback(() => dispatch({ type: 'incidentProgress', event: 'self_report_opened' }), []);
 
   const closeIncident = useCallback(() => {
-    tagSimulator.stopMovement(); // no-op unless the simulator is riding away
+    tagSimulator.reset(); // simulated bike back to Maarintie 8 for the next demo
     dispatch({ type: 'incidentClosed' });
   }, []);
   const dismissIncident = closeIncident;
