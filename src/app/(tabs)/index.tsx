@@ -1,5 +1,5 @@
 import { Link } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { BikeMap } from '@/components/BikeMap';
@@ -23,7 +23,7 @@ export default function LocationScreen() {
 
       {incident?.status === 'recovered_by_police' ? (
         <Link href="/incident" asChild>
-          <Pressable style={[styles.alertBar, styles.foundBar]}>
+          <Pressable style={styles.foundBar}>
             <AppText bold upper size={18} color={colors.success}>
               {s.location.recoveredTitle}
             </AppText>
@@ -61,23 +61,26 @@ export default function LocationScreen() {
   );
 }
 
+const alertBar: ViewStyle = {
+  position: 'absolute',
+  left: spacing.md,
+  right: spacing.md,
+  bottom: spacing.md,
+  backgroundColor: colors.chrome,
+  borderWidth: 3,
+  borderColor: colors.danger,
+  padding: spacing.md,
+  alignItems: 'center',
+  gap: spacing.xs,
+  zIndex: 1000,
+};
+
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   map: { flex: 1 },
-  alertBar: {
-    position: 'absolute',
-    left: spacing.md,
-    right: spacing.md,
-    bottom: spacing.md,
-    backgroundColor: colors.chrome,
-    borderWidth: 3,
-    borderColor: colors.danger,
-    padding: spacing.md,
-    alignItems: 'center',
-    gap: spacing.xs,
-    zIndex: 1000,
-  },
-  foundBar: { borderColor: colors.success },
+  alertBar,
+  // A <Link asChild> child must get a single style object, not an array.
+  foundBar: { ...alertBar, borderColor: colors.success },
   toggle: {
     position: 'absolute',
     left: spacing.md,
