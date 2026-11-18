@@ -110,8 +110,9 @@ colour, frame number, photos, receipt, insurer and policy number). You can skip 
 
 The simulated bike is parked at **Maarintie 8** (TUAS, Otaniemi).
 
-1. Tap the monitoring bar at the bottom of the **SIJAINTI** (Location) map, or go to **PYÖRÄT**
-   (Bikes) → *Aktivoi valvonta* (Turn on monitoring).
+1. **Monitoring is on by default:** the app arms itself where it first sees the bike. You can switch
+   it off and on with the bar at the bottom of the **SIJAINTI** (Location) map, or under **PYÖRÄT**
+   (Bikes). After a theft is closed it stays off until you turn it back on.
 2. **PYÖRÄT** → **Testaustila** (Test mode) → *Simuloi varkaus* (Simulate theft). The bike rides off
    along one of three real routes: to the Aalto University metro station, Teekkarikylä or
    Keilaniemi, following streets and bike paths. After about 15 seconds (two readings in a row

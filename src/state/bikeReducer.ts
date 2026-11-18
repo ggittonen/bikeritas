@@ -33,6 +33,11 @@ export type BikeState = PersistedState & {
   incident: Incident | null;
   /** Readings in a row past the movement threshold (false-alarm filter). */
   outsideStreak: number;
+  /**
+   * Monitoring is on by default: arm at the first location we get. Cleared once
+   * armed, when the owner turns it off by hand, or when a saved choice exists.
+   */
+  armOnFirstFix: boolean;
 };
 
 export type BikeAction =
@@ -61,6 +66,7 @@ export const initialBikeState: BikeState = {
   autoArm: true,
   incident: null,
   outsideStreak: 0,
+  armOnFirstFix: true,
 };
 
 function newIncident(parkedAt: Coordinate, fix: LocationFix): Incident {
@@ -76,13 +82,26 @@ function newIncident(parkedAt: Coordinate, fix: LocationFix): Incident {
 export function bikeReducer(state: BikeState, action: BikeAction): BikeState {
   switch (action.type) {
     case 'hydrate':
-      return { ...state, ...action.persisted, hydrated: true };
+      // A remembered on/off choice wins over the default.
+      return {
+        ...state,
+        ...action.persisted,
+        hydrated: true,
+        armOnFirstFix: action.persisted.armed === undefined,
+      };
 
     case 'tagUpdate': {
       const fix = action.status.lastFix;
       // Status-only updates (battery, connection) repeat the old fix; don't count them twice.
       const isNewFix = fix?.timestamp !== state.tag?.lastFix?.timestamp;
-      let { incident, outsideStreak } = state;
+      let { incident, outsideStreak, armed, parkedAt, armOnFirstFix } = state;
+      if (fix && armOnFirstFix && !armed && !incident) {
+        // Default-on monitoring: the bike is parked where we first see it.
+        armed = true;
+        parkedAt = { latitude: fix.latitude, longitude: fix.longitude };
+        armOnFirstFix = false;
+        return { ...state, tag: action.status, armed, parkedAt, armOnFirstFix, outsideStreak: 0 };
+      }
       if (fix && isNewFix) {
         if (incident) {
           // Once the police have the bike, the route is complete.
@@ -101,10 +120,10 @@ export function bikeReducer(state: BikeState, action: BikeAction): BikeState {
     }
 
     case 'arm':
-      return { ...state, armed: true, parkedAt: action.at, outsideStreak: 0 };
+      return { ...state, armed: true, parkedAt: action.at, outsideStreak: 0, armOnFirstFix: false };
 
     case 'disarm':
-      return { ...state, armed: false, parkedAt: null, outsideStreak: 0 };
+      return { ...state, armed: false, parkedAt: null, outsideStreak: 0, armOnFirstFix: false };
 
     case 'setSubscription':
       return { ...state, subscriptionActive: action.active };
@@ -120,6 +139,7 @@ export function bikeReducer(state: BikeState, action: BikeAction): BikeState {
         parkedAt: null,
         incident: null,
         outsideStreak: 0,
+        armOnFirstFix: true, // the new source starts with monitoring on, too
       };
 
     case 'setProfile':
@@ -154,6 +174,7 @@ export function bikeReducer(state: BikeState, action: BikeAction): BikeState {
     }
 
     case 'incidentClosed':
-      return { ...state, incident: null, armed: false, parkedAt: null, outsideStreak: 0 };
+      // Stays off: re-arming right away would alarm again while the owner moves the bike.
+      return { ...state, incident: null, armed: false, parkedAt: null, outsideStreak: 0, armOnFirstFix: false };
   }
 }
