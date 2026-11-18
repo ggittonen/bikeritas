@@ -33,6 +33,8 @@ export const fi = {
   location: {
     alertTitle: 'Huomio!',
     alertBody: 'Pyöräsi liikkuu ilman sinua',
+    recoveredTitle: 'Pyörä löytyi',
+    recoveredBody: 'Poliisi löysi pyöräsi – avaa tapaus',
   },
 
   bikes: {
@@ -160,12 +162,16 @@ export const fi = {
       detected: 'Ei vielä ilmoitettu',
       reporting: 'Ilmoitetaan…',
       police_notified: 'Poliisi tietää',
+      recovered_by_police: 'Poliisi löysi pyörän',
     } satisfies Record<IncidentStatus, string>,
     speed: 'Nopeus',
     lastLocation: 'Viimeisin sijainti',
     caseNumber: 'Tapausnumero',
     events: 'Tapahtumat',
     recovered: 'Pyörä saatu takaisin',
+    recoveredTitle: 'Pyörä löytyi!',
+    recoveredBody: 'Poliisi on löytänyt pyöräsi. Asiakaspalvelu ottaa sinuun yhteyttä ja sopii pyörän palautuksesta.',
+    closeCase: 'Kuittaa ja päätä tapaus',
     progressTitle: 'Ilmoitusten käsittely',
     crimeReport: 'Rikosilmoitus',
     insuranceClaim: 'Vakuutusilmoitus',
@@ -193,6 +199,8 @@ export const fi = {
           return 'Ilmoitus epäonnistui – yritä uudelleen';
         case 'self_report_opened':
           return 'Poliisin rikosilmoitussivu avattu';
+        case 'police_recovered':
+          return 'Poliisi löysi pyörän – tapaus päättyy';
       }
     },
   },
@@ -242,6 +250,16 @@ export const fi = {
     title: 'Tägin akku vähissä',
     body: (percent: number) => `Akkua jäljellä ${percent} %. Lataa tägi, jotta pyörä pysyy valvottuna.`,
   },
+
+  policeRecoveredNotification: {
+    title: 'Pyöräsi löytyi!',
+    body: 'Poliisi on löytänyt pyöräsi. Avaa sovellus nähdäksesi lisätiedot.',
+  },
+
+  support: {
+    call: 'Soita asiakaspalveluun',
+    caseRef: (caseId: string) => `tapausnumero ${caseId}`,
+  },
 };
 
 export type Strings = typeof fi;
@@ -276,6 +294,8 @@ export const en: Strings = {
   location: {
     alertTitle: 'Alert!',
     alertBody: 'Your bike is moving without you',
+    recoveredTitle: 'Bike found',
+    recoveredBody: 'The police found your bike – open the case',
   },
 
   bikes: {
@@ -403,12 +423,16 @@ export const en: Strings = {
       detected: 'Not reported yet',
       reporting: 'Reporting…',
       police_notified: 'Police informed',
+      recovered_by_police: 'Police found the bike',
     },
     speed: 'Speed',
     lastLocation: 'Last location',
     caseNumber: 'Case number',
     events: 'Events',
     recovered: 'Bike recovered',
+    recoveredTitle: 'Bike found!',
+    recoveredBody: 'The police have found your bike. Customer service will contact you to arrange its return.',
+    closeCase: 'Acknowledge and close case',
     progressTitle: 'Report progress',
     crimeReport: 'Crime report',
     insuranceClaim: 'Insurance claim',
@@ -436,6 +460,8 @@ export const en: Strings = {
           return 'Reporting failed – try again';
         case 'self_report_opened':
           return 'Police report page opened';
+        case 'police_recovered':
+          return 'Police found the bike – the case ends';
       }
     },
   },
@@ -484,6 +510,16 @@ export const en: Strings = {
   lowBatteryNotification: {
     title: 'Tag battery low',
     body: (percent: number) => `${percent} % left. Charge the tag to keep your bike monitored.`,
+  },
+
+  policeRecoveredNotification: {
+    title: 'Your bike was found!',
+    body: 'The police have found your bike. Open the app for details.',
+  },
+
+  support: {
+    call: 'Call customer service',
+    caseRef: (caseId: string) => `case number ${caseId}`,
   },
 };
 

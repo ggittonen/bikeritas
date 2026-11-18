@@ -125,6 +125,7 @@ export function BikeProvider({ children }: { children: ReactNode }) {
     return onNotificationOpened((route) => {
       if (route === '/alert') router.push('/alert');
       if (route === '/bikes') router.navigate('/bikes');
+      if (route === '/incident') router.navigate('/incident');
     });
   }, []);
 
@@ -150,6 +151,16 @@ export function BikeProvider({ children }: { children: ReactNode }) {
       lowBatteryNotified.current = false;
     }
   }, [battery]);
+
+  // The police found the bike: stop tracking movement, tell the owner, show the case.
+  const recoveredByPolice = state.incident?.status === 'recovered_by_police';
+  useEffect(() => {
+    if (!recoveredByPolice) return;
+    tagSimulator.stopMovement(); // the simulated bike stops where the police found it
+    const { title, body } = textRef.current.policeRecoveredNotification;
+    notify(title, body, '/incident');
+    router.navigate('/incident');
+  }, [recoveredByPolice]);
 
   // Once customer service has the case: stream the live location and follow report progress.
   const caseId = state.incident?.supportCaseId;

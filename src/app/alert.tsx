@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { AppText } from '@/components/AppText';
 import { BigButton } from '@/components/BigButton';
 import { BikeMap } from '@/components/BikeMap';
+import { CallSupportButton } from '@/components/CallSupportButton';
 import { useI18n } from '@/i18n/LanguageContext';
 import { useBike } from '@/state/BikeContext';
 import { colors, spacing } from '@/theme';
@@ -11,7 +12,7 @@ import { colors, spacing } from '@/theme';
 /** Shown the moment unauthorized movement is detected: two big, obvious choices. */
 export default function AlertScreen() {
   const { s } = useI18n();
-  const { incident, tag, dismissIncident } = useBike();
+  const { incident, tag, dismissIncident, subscriptionActive } = useBike();
 
   if (!incident) {
     return (
@@ -58,6 +59,8 @@ export default function AlertScreen() {
           style={styles.choice}
         />
       </View>
+
+      {subscriptionActive ? <CallSupportButton caseId={incident.supportCaseId} /> : null}
     </ScrollView>
   );
 }

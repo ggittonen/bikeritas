@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { AppText } from '@/components/AppText';
 import { BigButton } from '@/components/BigButton';
 import { BikeMap } from '@/components/BikeMap';
+import { CallSupportButton } from '@/components/CallSupportButton';
 import { Card, Row } from '@/components/Card';
 import type { ReportStage } from '@/domain/types';
 import { formatTime } from '@/format';
@@ -13,7 +14,7 @@ import { colors, spacing } from '@/theme';
 
 export default function IncidentScreen() {
   const { s } = useI18n();
-  const { incident, tag, markRecovered } = useBike();
+  const { incident, tag, markRecovered, subscriptionActive } = useBike();
   const fix = tag?.lastFix ?? null;
 
   if (!incident) {
@@ -30,8 +31,23 @@ export default function IncidentScreen() {
     router.dismissTo('/');
   };
 
+  const foundByPolice = incident.status === 'recovered_by_police';
+
   return (
     <ScrollView contentContainerStyle={styles.content}>
+      {foundByPolice ? (
+        // The police retrieval ends the theft: the owner only acknowledges it.
+        <View style={styles.found}>
+          <AppText bold upper size={24} color={colors.success}>
+            {s.incident.recoveredTitle}
+          </AppText>
+          <AppText size={14} style={styles.foundBody}>
+            {s.incident.recoveredBody}
+          </AppText>
+          <BigButton title={s.incident.closeCase} onPress={onRecovered} />
+        </View>
+      ) : null}
+
       <BikeMap position={fix} path={incident.path} label={s.common.bikeLocation} style={styles.map} />
 
       <Card title={s.incident.situation}>
@@ -70,7 +86,8 @@ export default function IncidentScreen() {
           onPress={() => router.push('/confirm-report')}
         />
       ) : null}
-      <BigButton title={s.incident.recovered} onPress={onRecovered} />
+      {subscriptionActive ? <CallSupportButton caseId={incident.supportCaseId} /> : null}
+      {foundByPolice ? null : <BigButton title={s.incident.recovered} onPress={onRecovered} />}
     </ScrollView>
   );
 }
@@ -104,6 +121,8 @@ function ProgressRow({ label, stage }: { label: string; stage: ReportStage }) {
 }
 
 const styles = StyleSheet.create({
+  found: { borderWidth: 3, borderColor: colors.success, padding: spacing.md, gap: spacing.sm, alignItems: 'center' },
+  foundBody: { textAlign: 'center', lineHeight: 21 },
   progress: { gap: spacing.xs },
   progressHeader: { flexDirection: 'row', justifyContent: 'space-between' },
   steps: { flexDirection: 'row', gap: 4 },

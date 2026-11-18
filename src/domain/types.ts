@@ -69,9 +69,11 @@ export type ReportProgress = {
   crimeReport: ReportStage;
   /** null when no insurer is saved, so no claim was filed. */
   insuranceClaim: ReportStage | null;
+  /** The police have found the bike; customer service arranges the return. */
+  bikeRecovered: boolean;
 };
 
-export type IncidentStatus = 'detected' | 'reporting' | 'police_notified';
+export type IncidentStatus = 'detected' | 'reporting' | 'police_notified' | 'recovered_by_police';
 
 /** Timeline entry. Stored as a kind (not text) so it can be shown in any language. */
 export type IncidentEvent = {
@@ -84,7 +86,8 @@ export type IncidentEvent = {
     | 'insurance_claim'
     | 'sharing_location'
     | 'report_failed'
-    | 'self_report_opened';
+    | 'self_report_opened'
+    | 'police_recovered';
   caseId?: string;
 };
 

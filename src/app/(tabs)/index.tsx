@@ -21,7 +21,16 @@ export default function LocationScreen() {
     <View style={styles.screen}>
       <BikeMap position={fix} parkedAt={armed ? parkedAt : null} path={incident?.path} label={label} style={styles.map} />
 
-      {incident ? (
+      {incident?.status === 'recovered_by_police' ? (
+        <Link href="/incident" asChild>
+          <Pressable style={[styles.alertBar, styles.foundBar]}>
+            <AppText bold upper size={18} color={colors.success}>
+              {s.location.recoveredTitle}
+            </AppText>
+            <AppText upper>{s.location.recoveredBody}</AppText>
+          </Pressable>
+        </Link>
+      ) : incident ? (
         <Link href="/alert" asChild>
           <Pressable style={styles.alertBar}>
             <AppText bold upper size={18} color={colors.danger}>
@@ -68,6 +77,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     zIndex: 1000,
   },
+  foundBar: { borderColor: colors.success },
   toggle: {
     position: 'absolute',
     left: spacing.md,

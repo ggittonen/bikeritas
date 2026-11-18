@@ -85,7 +85,10 @@ export function bikeReducer(state: BikeState, action: BikeAction): BikeState {
       let { incident, outsideStreak } = state;
       if (fix && isNewFix) {
         if (incident) {
-          incident = { ...incident, path: [...incident.path, fix] };
+          // Once the police have the bike, the route is complete.
+          if (incident.status !== 'recovered_by_police') {
+            incident = { ...incident, path: [...incident.path, fix] };
+          }
         } else if (state.armed && state.parkedAt) {
           outsideStreak = isUnauthorizedMovement(state.parkedAt, fix) ? outsideStreak + 1 : 0;
           if (outsideStreak >= CONSECUTIVE_READINGS_REQUIRED) {
@@ -139,9 +142,16 @@ export function bikeReducer(state: BikeState, action: BikeAction): BikeState {
       };
     }
 
-    case 'reportProgress':
+    case 'reportProgress': {
       if (!state.incident) return state;
-      return { ...state, incident: { ...state.incident, progress: action.progress } };
+      const incident = { ...state.incident, progress: action.progress };
+      // The police found the bike: the theft is over, the owner just acknowledges it.
+      if (action.progress.bikeRecovered && incident.status !== 'recovered_by_police') {
+        incident.status = 'recovered_by_police';
+        incident.timeline = [...incident.timeline, { at: Date.now(), kind: 'police_recovered' }];
+      }
+      return { ...state, incident };
+    }
 
     case 'incidentClosed':
       return { ...state, incident: null, armed: false, parkedAt: null, outsideStreak: 0 };

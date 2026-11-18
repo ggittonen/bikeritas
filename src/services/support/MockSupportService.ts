@@ -3,14 +3,18 @@ import type { SupportCase, SupportService, TheftReport } from './SupportService'
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** Demo timeline: how both reports advance, a few seconds per step. */
+/**
+ * Demo timeline, a few seconds per step: both reports advance, and in the end
+ * the police find the bike (using the live location), which ends the theft.
+ */
 const DEMO_STEPS: ReportProgress[] = [
-  { crimeReport: 'sent', insuranceClaim: 'sent' },
-  { crimeReport: 'received', insuranceClaim: 'sent' },
-  { crimeReport: 'received', insuranceClaim: 'received' },
-  { crimeReport: 'processing', insuranceClaim: 'received' },
-  { crimeReport: 'processing', insuranceClaim: 'processing' },
-  { crimeReport: 'done', insuranceClaim: 'processing' },
+  { crimeReport: 'sent', insuranceClaim: 'sent', bikeRecovered: false },
+  { crimeReport: 'received', insuranceClaim: 'sent', bikeRecovered: false },
+  { crimeReport: 'received', insuranceClaim: 'received', bikeRecovered: false },
+  { crimeReport: 'processing', insuranceClaim: 'received', bikeRecovered: false },
+  { crimeReport: 'processing', insuranceClaim: 'processing', bikeRecovered: false },
+  { crimeReport: 'done', insuranceClaim: 'processing', bikeRecovered: false },
+  { crimeReport: 'done', insuranceClaim: 'processing', bikeRecovered: true },
 ];
 const STEP_MS = 6000;
 

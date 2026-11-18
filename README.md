@@ -124,8 +124,16 @@ The simulated bike is parked at **Maarintie 8** (TUAS, Otaniemi).
    - **Without it:** the screen opens the police's online crime report and shows your saved bike
      details to copy.
 5. The tracking screen shows the route, the **progress of the crime report and insurance claim**
-   (sent → received → in progress → handled) and a timeline. Finish with *Pyörä saatu takaisin*
-   (Bike recovered); the simulated bike returns to Maarintie 8.
+   (sent → received → in progress → handled) and a timeline.
+6. **The police find the bike** about 40 seconds after you confirm (simulated). The bike stops, you
+   get a notification, and the tracking screen shows **Pyörä löytyi!** (Bike found!). Tap *Kuittaa ja
+   päätä tapaus* (Acknowledge and close case) to end the theft. If you get the bike back yourself,
+   *Pyörä saatu takaisin* (Bike recovered) ends it too. The simulated bike then returns to Maarintie 8.
+
+With the subscription, the alert and tracking screens also have **Soita asiakaspalveluun** (Call
+customer service), which opens the phone's dialler and shows the case number. The number is a
+placeholder (`+358 00 000 0000`, not a real number); set the real one in
+`src/services/support/supportContact.ts`.
 
 Also in this version, based on user testing:
 - **Low tag battery** sends a notification below 20 %.
