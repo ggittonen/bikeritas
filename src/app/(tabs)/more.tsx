@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'reac
 
 import { AppText } from '@/components/AppText';
 import { BigButton } from '@/components/BigButton';
+import { CallSupportButton } from '@/components/CallSupportButton';
 import { Card } from '@/components/Card';
 import { AUTO_ARM_DISTANCE_M } from '@/domain/movementDetection';
 import { useI18n } from '@/i18n/LanguageContext';
@@ -29,6 +30,7 @@ export default function MoreScreen() {
     autoArm,
     setAutoArm,
     autoArmAvailable,
+    incident,
   } = useBike();
   const bikeSummary = [profile.make, profile.model, profile.color].filter(Boolean).join(' · ');
   const [showCodeInput, setShowCodeInput] = useState(false);
@@ -74,6 +76,13 @@ export default function MoreScreen() {
         <AppText size={12} color={colors.muted}>
           {s.more.subscriptionNote}
         </AppText>
+      </Card>
+
+      <Card title={s.more.supportTitle}>
+        <AppText size={14} style={styles.body}>
+          {s.more.supportBody}
+        </AppText>
+        <CallSupportButton caseId={incident?.supportCaseId} />
       </Card>
 
       <Card title={s.more.bikeDetailsTitle}>
